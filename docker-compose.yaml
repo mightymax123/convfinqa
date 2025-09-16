@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./app:/app/src
+      - ./data:/app/data
+      - ./pyproject.toml:/app/src/pyproject.toml
+      - ./outputs:/app/outputs
+      - ./tests:/app/tests
+    tty: true
+    env_file:
+      - .env

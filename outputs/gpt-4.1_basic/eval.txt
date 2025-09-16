@@ -1,0 +1,4 @@
+Model: gpt-4.1
+Prompting Strategy: basic
+Average Accuracy: 16.00%
+sample_size: 5
