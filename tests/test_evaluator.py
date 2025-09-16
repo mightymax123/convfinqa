@@ -49,9 +49,7 @@ def no_match_conv() -> list[ConvQA]:
 
 
 @patch("builtins.open", new_callable=mock_open)  # stops saving files to disk
-def test_evaluate_all_conversations_100_percent(
-    mock_file: MagicMock, perfect_match_conv: list[ConvQA]
-) -> None:
+def test_evaluate_all_conversations_100_percent(mock_file: MagicMock, perfect_match_conv: list[ConvQA]) -> None:
     """
     GIVEN a perfectly matching conversation
     WHEN evaluate_all_conversations is called
@@ -63,9 +61,7 @@ def test_evaluate_all_conversations_100_percent(
 
 
 @patch("builtins.open", new_callable=mock_open)
-def test_evaluate_all_conversations_50_percent(
-    mock_file: MagicMock, partial_match_conv: list[ConvQA]
-) -> None:
+def test_evaluate_all_conversations_50_percent(mock_file: MagicMock, partial_match_conv: list[ConvQA]) -> None:
     """
     GIVEN a conversation with one correct and one incorrect answer
     WHEN evaluate_all_conversations is called
@@ -77,9 +73,7 @@ def test_evaluate_all_conversations_50_percent(
 
 
 @patch("builtins.open", new_callable=mock_open)
-def test_evaluate_all_conversations_0_percent(
-    mock_file: MagicMock, no_match_conv: list[ConvQA]
-) -> None:
+def test_evaluate_all_conversations_0_percent(mock_file: MagicMock, no_match_conv: list[ConvQA]) -> None:
     """
     GIVEN a conversation with all answers wrong
     WHEN evaluate_all_conversations is called

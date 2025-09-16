@@ -12,9 +12,7 @@ from src.prompting import PromptGenerator
         ("few_shot", "Answers:"),
     ],
 )
-def test_prompt_generator_returns_expected_prompt(
-    strategy: str, expected_substring: str
-) -> None:
+def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substring: str) -> None:
     """
     GIVEN a PromptGenerator using a specific strategy
     WHEN generate_prompt is called with a ConvQA object

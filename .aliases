@@ -1,0 +1,8 @@
+alias format='docker compose exec app uvx ruff format .'
+alias linting='docker compose exec app uvx ruff check --fix .'
+alias type-checks='docker compose exec app uvx mypy .'
+alias tests='docker compose exec app uv run pytest tests/'
+
+alias checks='format && linting && type-checks && tests'
+
+alias pipeline='docker compose exec app uvx ruff format --check src/ && docker compose exec app uvx ruff check src/ && docker compose exec app uvx mypy src/ && docker compose exec app uv run pytest tests/'

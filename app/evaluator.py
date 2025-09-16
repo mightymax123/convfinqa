@@ -48,9 +48,7 @@ class ConversationsEvaluator:
         returns:
             float: The accuracy of the LLM's responses in the conversation.
         """
-        preds = [
-            pred.strip() for pred in conv.formatted_llm_response if pred is not None
-        ]
+        preds = [pred.strip() for pred in conv.formatted_llm_response if pred is not None]
         true = [ans.strip() for ans in conv.answers if ans is not None]
 
         total = len(true)
@@ -82,9 +80,7 @@ class ConversationsEvaluator:
 
         self._save_evaluation(avg_accuracy)
 
-        logger.info(
-            f"Evaluated {len(self.all_convs)} conversations. Average accuracy: {avg_accuracy:.2f}%"
-        )
+        logger.info(f"Evaluated {len(self.all_convs)} conversations. Average accuracy: {avg_accuracy:.2f}%")
 
         return avg_accuracy
 

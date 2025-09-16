@@ -44,9 +44,7 @@ class GetAllLlmResponses:
         """
         self.llm = OpenAiLlmResponse(model_name=model_name)
         self.conv_parser = ConvFinQaDataParser(data_path=data_path)
-        self.all_convs = self.conv_parser.get_all_docs_and_q_and_a_pairs(
-            load_train_data=load_train_data
-        )
+        self.all_convs = self.conv_parser.get_all_docs_and_q_and_a_pairs(load_train_data=load_train_data)
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
         logger.info(
@@ -61,9 +59,7 @@ class GetAllLlmResponses:
             self.all_convs = random.sample(self.all_convs, sample_size)
 
         subfolder = f"{model_name}_{prompting_strategy}"
-        self.save_path = os.path.join(
-            "/app/outputs", subfolder, "convfinqa_responses.json"
-        )
+        self.save_path = os.path.join("/app/outputs", subfolder, "convfinqa_responses.json")
 
     def _get_conv_response(self, conv: ConvQA) -> None:
         """
@@ -72,9 +68,7 @@ class GetAllLlmResponses:
         Args:
             conv (ConvQA): The conversation object containing questions and answers.
         """
-        logger.debug(
-            f"Generating prompt and requesting response for conversation ID: {conv.id}"
-        )
+        logger.debug(f"Generating prompt and requesting response for conversation ID: {conv.id}")
 
         prompt = self.prompt_gen.generate_prompt(conv)
         response = self.llm.get_response(prompt=prompt)
@@ -121,9 +115,7 @@ class GetAllLlmResponses:
                 self._get_conv_response(conv)
             except Exception as e:
                 logger.error(f"Error processing conversation {conv.id}: {e}")
-                raise RuntimeError(
-                    f"Error processing conversation {conv.id}: {e}"
-                ) from e
+                raise RuntimeError(f"Error processing conversation {conv.id}: {e}") from e
 
         self._save_conversations_to_json()
 

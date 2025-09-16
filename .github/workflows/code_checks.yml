@@ -1,0 +1,32 @@
+name: Code Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create environment file
+        run: |
+          cp sample.env .env
+          echo "OPENAI_API_KEY=dummy_key_for_testing" >> .env
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Run code checks
+        run: |
+          docker compose run --rm app uvx ruff format --check src/
+          docker compose run --rm app uvx ruff check src/
+          docker compose run --rm app uvx mypy src/
+
+      - name: Run tests
+        run: |
+          docker compose run --rm app uv run pytest tests/ -v

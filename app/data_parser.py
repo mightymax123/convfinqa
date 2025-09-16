@@ -65,9 +65,7 @@ class ConvFinQaDataParser:
             raise FileNotFoundError(f"The file {data_path} does not exist.")
 
         if not data_path.endswith(".json"):
-            raise ValueError(
-                "The provided file is not a JSON file. Please provide a valid JSON file."
-            )
+            raise ValueError("The provided file is not a JSON file. Please provide a valid JSON file.")
 
         try:
             with open(data_path, encoding="utf-8") as file:
@@ -75,13 +73,9 @@ class ConvFinQaDataParser:
                 data = cast(dict[str, Any], json.load(file))
                 return data
         except json.JSONDecodeError as e:
-            raise ValueError(
-                f"Error decoding JSON from the file {data_path}: {e}"
-            ) from e
+            raise ValueError(f"Error decoding JSON from the file {data_path}: {e}") from e
 
-    def _get_q_and_a_pair(
-        self, idx: int, load_train_data: bool = True
-    ) -> tuple[list[str], list[str]]:
+    def _get_q_and_a_pair(self, idx: int, load_train_data: bool = True) -> tuple[list[str], list[str]]:
         """
         Get a question and answer pair from the data by index.
 
@@ -140,9 +134,7 @@ class ConvFinQaDataParser:
 
         return cast(str, self.data[data_type][idx]["id"])
 
-    def _get_doc_and_q_and_a_pair(
-        self, idx: int, load_train_data: bool = True
-    ) -> ConvQA:
+    def _get_doc_and_q_and_a_pair(self, idx: int, load_train_data: bool = True) -> ConvQA:
         """
         Get the document and a question-answer pair from the data by index.
 
@@ -166,9 +158,7 @@ class ConvFinQaDataParser:
         conv_qa = ConvQA(id=id, doc=doc, questions=questions, answers=answers)
         return conv_qa
 
-    def get_all_docs_and_q_and_a_pairs(
-        self, load_train_data: bool = True
-    ) -> list[ConvQA]:
+    def get_all_docs_and_q_and_a_pairs(self, load_train_data: bool = True) -> list[ConvQA]:
         """
         Get all documents and question-answer pairs from the data.
 

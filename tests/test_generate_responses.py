@@ -37,9 +37,7 @@ def test_extract_list_from_valid_llm_response() -> (
     assert result == ["100", "50"]
 
 
-def test_extract_list_from_empty_response() -> (
-    None
-):  # Testing internal method because it's core to formatting logic
+def test_extract_list_from_empty_response() -> None:  # Testing internal method because it's core to formatting logic
     """
     GIVEN an empty string
     WHEN _extract_list_from_llm_response is called
@@ -49,17 +47,13 @@ def test_extract_list_from_empty_response() -> (
     assert result == []
 
 
-def test_extract_list_from_invalid_list() -> (
-    None
-):  # Testing internal method because it's core to formatting logic
+def test_extract_list_from_invalid_list() -> None:  # Testing internal method because it's core to formatting logic
     """
     GIVEN a badly formatted response that resembles a list but isn't valid Python
     WHEN _extract_list_from_llm_response is called
     THEN it should return an empty list
     """
-    invalid_response = (
-        "Answers: ['100', 50"  # missing closing bracket, invalid response
-    )
+    invalid_response = "Answers: ['100', 50"  # missing closing bracket, invalid response
     result = GetAllLlmResponses()._extract_list_from_llm_response(invalid_response)
     assert result == []
 

@@ -63,9 +63,7 @@ def evaluate(
         help="Prompting strategy to use (e.g. 'basic', 'chain_of_thought')",
     ),
     sample_size: int = typer.Option(10, help="Number of samples to evaluate"),
-    use_train_data: bool = typer.Option(
-        False, help="Use training data instead of dev set"
-    ),
+    use_train_data: bool = typer.Option(False, help="Use training data instead of dev set"),
     use_seed: bool = typer.Option(
         True,
         help="Use fixed random seed for reproducibility",

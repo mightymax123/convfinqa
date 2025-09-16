@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Virtual environments
+.env
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# macOS
+.DS_Store
+
+.*cache
+
+uv.lock
+
+app/outputs/*
+
+/app/pyproject.toml
+/app/README.md
+/app.uv.lock
+/app/.venv
+
+outputs/*
+
