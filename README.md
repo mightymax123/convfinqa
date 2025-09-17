@@ -1,11 +1,40 @@
-# ConvFinQA evaluation
+# ConvFinQA Evaluation Pipeline
+
+[![Python](https://img.shields.io/badge/python-v3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://github.com/python/mypy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
-This guide provides instructions for setting up the evaluation pipeline for the ConvFinQA dataset.
+A reproducible evaluation framework for benchmarking Large Language Models on the **ConvFinQA** dataset - a conversational financial question-answering benchmark requiring multi-step reasoning across tabular data.
 
-The codebase preprocesses the data and uses the OpenAI API to generate responses to questions. It supports easy experimentation with different prompting strategies such as `chain-of-thought` and `few-shot learning`.
+This pipeline evaluates multiple OpenAI models (`gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini`) using three distinct prompting strategies (`basic`, `chain-of-thought`, `few-shot`) with structured output generation and comprehensive accuracy metrics.
 
+### Key Features
+
+- **Multi-Model Support**: Evaluate OpenAI's latest models with consistent methodology
+- **Prompt Engineering**: Compare basic, chain-of-thought, and few-shot learning approaches  
+- **Reproducible Results**: Seeded sampling and containerized environment
+- **Production Ready**: Type-safe configuration, retry logic, structured logging
+- **Comprehensive Testing**: Unit tests with pytest, linting with ruff, type checking with mypy
+
+### Quick Results Summary
+
+| Model       | Best Strategy | Accuracy (%) | Sample Size |
+| ----------- | ------------- | ------------ | ----------- |
+| **o4-mini** | Few-Shot      | **54.15**    | 20          |
+| gpt-4.1     | Few-Shot      | 49.13        | 50          |
+| gpt-4o      | Few-Shot      | 35.30        | 50          |
+| gpt-4o-mini | Few-Shot      | 22.25        | 50          |
+
+> **Key Insight**: o4-mini significantly outperforms all other models, achieving 54.15% accuracy - over 2x better than gpt-4o-mini and 5% higher than gpt-4.1.
+
+**Performance Comparison**: The chart below shows accuracy across all model-strategy combinations, highlighting Few-Shot learning's consistent superiority and o4-mini's unexpected strong performance.
+
+![ConvFinQA Results - Accuracy by Model and Prompting Strategy](images/accuracy_by_model_strategy.png)
+
+*Full results and analysis available in [REPORT.md](REPORT.md)*
 
 ## Setup
 
@@ -13,7 +42,7 @@ The codebase preprocesses the data and uses the OpenAI API to generate responses
 
 Firstly, please run the following command, this will enable you to configure your `.env` file with defaults that can be easily replaced.
 
-```bashF
+```bash
 cp sample.env .env
 ```
 
@@ -69,7 +98,7 @@ The application uses Pydantic v2 for centralized configuration management. All e
 
 The configuration is automatically loaded from the `.env` file and made available throughout the application via a global `config` instance.
 
-### directory initialisation
+### Directory Initialization
 
 Please run the following command to create an empty outputs directory, this will then be volume mapped inside your container, where it will later be populated with evaluation output files.
 
@@ -100,13 +129,13 @@ docker compose up --build -d
 
 ### Aliases
 
-A series of aliases are provided for convinience and ease of use. To activate these, from the project root run:
+A series of aliases are provided for convenience and ease of use. To activate these, from the project root run:
 
 ```bash
 source .aliases
 ```
 
-These aliases are summarised in the table below
+These aliases are summarized in the table below
 
 
 | Alias         | Description                                      | Command                                                                                                                                                                               |
@@ -119,22 +148,21 @@ These aliases are summarised in the table below
 | `pipeline`    | Runs the full CI/CD pipeline                     | `docker compose exec app uvx ruff format --check . && docker compose exec app uvx ruff check . && docker compose exec app uvx mypy . && docker compose exec app uv run pytest tests/` |
 
 
-### Running the evaluations
+### Running the Evaluations
 
-To run an evaluation on the convfinqa dataset, using a given model and prompting stratergy, please run:
+To run an evaluation on the ConvFinQA dataset, using a given model and prompting strategy, please run:
 
 ```bash
 docker compose exec app uv run python src/main.py --model-name <model_name> --prompting-strategy <prompt_strategy> --sample-size <sample_size>  --use-seed <True/False>                                                                          
 ```
 
-For simplicity, here is a quick example using gpt4o mini and a basic prompting stratergy and a sample size of 5, with use of a random seed:
+For simplicity, here is a quick example using gpt-4o-mini and a basic prompting strategy and a sample size of 5, with use of a random seed:
 
 ```bash
 docker compose exec app uv run python src/main.py --model-name gpt-4o-mini --prompting-strategy basic --sample-size 5 --use-seed True                                                                       
 ```
 
-
-Each of the arguments, as well as there data type, default values, all valid values, and descriptions are given below: 
+Each of the arguments, as well as their data type, default values, all valid values, and descriptions are given below: 
 
 
 | Argument               | Type   | Default Value      | Acceptable Values                             | Description                                  |
@@ -149,21 +177,23 @@ Each of the arguments, as well as there data type, default values, all valid val
 
 ### Outputs
 
-When the evaluation is ran, a new directory will be created in the `/app/outputs `directory. If the `outputs` directory does not yet exist, it will also be created. The newly created directory, will have a dynamically created name, corresponding to the model ran and the prompting stratergy in the form:
+### Outputs
 
-`<model_name>_<prompting_stratergy>`
+When the evaluation is run, a new directory will be created in the `/app/outputs` directory. If the `outputs` directory does not yet exist, it will also be created. The newly created directory will have a dynamically created name, corresponding to the model run and the prompting strategy in the form:
 
-For example: if `gpt-4.1` was ran with a prompting stratergy of `basic`, the file name would be `gpt-4.1_basic`.
+`<model_name>_<prompting_strategy>`
+
+For example: if `gpt-4.1` was run with a prompting strategy of `basic`, the file name would be `gpt-4.1_basic`.
 
 Inside the newly created directory 2 files are created. The first is a `.json` file, for each conversation evaluated, it contains details such as the conversation id, document, questions, and formatted LLM response. The second document is a `.txt` file, with summary information like sample size and LLM prediction accuracy. 
 
 An example of the output structure with several dynamically created directories is shown below
 
-![alt text](images/image1.png)
+![alt text](images/app_outputs.png)
 
-### Evaluating all models and stratergies
+### Evaluating All Models and Strategies
 
-A `.sh` script has been created, with a series of commands to evaluate all models with all stratergies. First run:
+A `.sh` script has been created, with a series of commands to evaluate all models with all strategies. First run:
 
 ```bash
 chmod +x run_models.sh
@@ -175,25 +205,50 @@ Then you can run:
 ./run_models.sh
 ```
 
-## CI/CD
+## CI/CD Pipeline
 
-A CI/CD pipeline has been initialised, it will check any PRs into main for the following:
+A comprehensive CI/CD pipeline has been implemented that automatically validates all pull requests to main for:
 
-- correct formatting
-- linting
-- Type checking
-- Check all tests pass
+- **Code Formatting**: Automated formatting checks with `ruff`
+- **Linting**: Code quality analysis and auto-fixes  
+- **Type Checking**: Static type validation with `mypy`
+- **Testing**: Complete test suite execution with `pytest`
 
-The `pipeline` alias replicates the CI/CD pipeline, running this alias is a simple check if a PR will pass the pipeline.
+The `pipeline` alias replicates the CI/CD pipeline locally, allowing you to verify your changes will pass before submitting a PR.
 
+## Architecture & Design
 
-## Future work
+### Prompting Strategies
 
-The following points would be good next steps for further improve the codebase.
+- **Basic**: Minimal prompt serving as baseline performance
+- **Chain-of-Thought**: Step-by-step reasoning before final answers  
+- **Few-Shot**: Example-driven learning focusing on output formatting
 
-- Evaluation of models from other cloud providers such as Gemini and Claude
-- Evaluation of opensource models, such as Llama and Mistral, can be done through Ollama or huggingface (highly dependent on compute resources)
-- Expansion of evaluation framework, other methods are more comprehensive than direct string matching
-- Additional prompt engineering, investigating how different templates can impact performance
-- Add async/await support for concurrent API calls to improve performance
-- Implement retry logic and rate limiting for robust API interactions
+### Evaluation Methodology
+
+- **Accuracy Metric**: Exact string matching between predicted and ground truth answers
+- **Reproducible Sampling**: Configurable sample sizes with optional seeding
+- **Structured Outputs**: JSON format with conversation metadata and evaluation results
+
+## Future Work
+
+The following enhancements would further improve the codebase:
+
+- **Multi-Provider Support**: Evaluation of models from Anthropic (Claude) and Google (Gemini)
+- **Open Source Models**: Integration with Llama and Mistral via Ollama or HuggingFace
+- **Enhanced Evaluation**: Tolerance-based matching, embedding similarity, numeric precision handling
+- **Performance Optimization**: Async/await support for concurrent API calls
+- **Advanced Prompting**: Template experimentation and prompt optimization
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and ensure tests pass (`make checks`)
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
