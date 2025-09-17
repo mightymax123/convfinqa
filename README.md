@@ -21,12 +21,16 @@ This pipeline evaluates multiple OpenAI models (`gpt-4.1`, `gpt-4o`, `gpt-4o-min
 
 ### Quick Results Summary
 
+<div align="center">
+
 | Model       | Best Strategy | Accuracy (%) | Sample Size |
 | ----------- | ------------- | ------------ | ----------- |
 | **o4-mini** | Few-Shot      | **54.15**    | 20          |
 | gpt-4.1     | Few-Shot      | 49.13        | 50          |
 | gpt-4o      | Few-Shot      | 35.30        | 50          |
 | gpt-4o-mini | Few-Shot      | 22.25        | 50          |
+
+</div>
 
 > **Key Insight**: o4-mini significantly outperforms all other models, achieving 54.15% accuracy - over 2x better than gpt-4o-mini and 5% higher than gpt-4.1.
 
