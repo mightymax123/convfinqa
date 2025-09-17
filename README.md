@@ -218,6 +218,31 @@ The `pipeline` alias replicates the CI/CD pipeline locally, allowing you to veri
 
 ## Architecture & Design
 
+### System Overview
+
+```mermaid
+flowchart TD
+    A[ConvFinQA Dataset] --> B[Data Parser & Sampler]
+    B --> C{Prompting Strategy}
+    C -->|Basic| D1[Basic Prompt Builder]
+    C -->|Chain-of-Thought| D2[CoT Prompt Builder] 
+    C -->|Few-Shot| D3[Few-Shot Prompt Builder]
+    D1 --> E[OpenAI API Client]
+    D2 --> E
+    D3 --> E
+    E -->|Retry Logic| F[LLM Response]
+    F --> G[Response Parser]
+    G --> H[Accuracy Evaluator]
+    H --> I[Structured Outputs]
+    I --> J[JSON Results]
+    I --> K[Summary Reports]
+    
+    style A fill:#e1f5fe
+    style E fill:#fff3e0
+    style H fill:#f3e5f5
+    style I fill:#e8f5e8
+```
+
 ### Prompting Strategies
 
 - **Basic**: Minimal prompt serving as baseline performance
