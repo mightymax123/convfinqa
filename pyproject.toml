@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-main = "src.main:app"
+convfinqa = "app.main:main"
 
 [tool.ruff]
 line-length = 120

@@ -4,7 +4,7 @@ parses ConvFinQa data from a JSON file and provides methods to access question-a
 
 import json
 import os
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
@@ -24,7 +24,7 @@ class ConvQA(BaseModel):
     doc: str = Field(min_length=1, description="The document text related to the conversation")
     questions: list[str] = Field(min_length=1, description="List of questions in the conversation")
     answers: list[str] = Field(min_length=1, description="List of answers for the conversation")
-    llm_response: Optional[str] = Field(default=None, description="Raw response from the language model")
+    llm_response: str | None = Field(default=None, description="Raw response from the language model")
     formatted_llm_response: list[str] = Field(default_factory=list, description="Parsed LLM response as list")
 
     @property

@@ -22,9 +22,40 @@ The below table provides a brief summary of each environment variable
 | Variable            | Default Value                      | Type   | Description                                                            |
 | ------------------- | ---------------------------------- | ------ | ---------------------------------------------------------------------- |
 | `LOG_LEVEL`         | `INFO`                             | string | Sets the logging verbosity. Options: `DEBUG`, `INFO`, `WARN`, `ERROR`. |
-| `OPENAI_API_KEY`    | `MY_API_KEY`                       | string | Your OpenAI API key used to generate model responses.                  |
+| `OPENAI_API_KEY`    | `your_openai_api_key_here`         | string | Your OpenAI API key used to generate model responses.                  |
 | `DATA_PATH`         | `/app/data/convfinqa_dataset.json` | string | Path to the ConvFinQA dataset JSON file.                               |
 | `RANDOM_SEED`       | `42`                               | int    | Random seed for reproducible sampling and evaluation.                  |
+| `MAX_RETRIES`       | `3`                                | int    | Number of retry attempts for failed API calls.                         |
+| `BASE_DELAY`        | `2.0`                              | float  | Initial delay in seconds for exponential backoff.                      |
+
+### Retry Configuration
+
+The system includes exponential backoff retry logic for OpenAI API calls to handle rate limits and transient failures gracefully:
+
+| Variable | Default Value | Type | Description |
+|----------|---------------|------|-------------|
+| `MAX_RETRIES` | `3` | int | Number of retry attempts for failed API calls |
+| `BASE_DELAY` | `2.0` | float | Initial delay in seconds for exponential backoff |
+
+#### Retry Schedule Example
+
+With default settings (MAX_RETRIES=3, BASE_DELAY=2.0):
+
+- **Attempt 1**: Immediate
+- **Attempt 2**: Wait 2.0 seconds  
+- **Attempt 3**: Wait 4.0 seconds
+- **Attempt 4**: Wait 8.0 seconds
+
+#### Retryable Errors
+
+The system automatically retries the following OpenAI API errors:
+- Rate limit exceeded (`RateLimitError`)
+- API timeout (`APITimeoutError`) 
+- General API errors (`APIError`)
+
+Non-retryable errors (authentication, validation) fail immediately.
+
+Configure these values in your `.env` file to handle different API rate limits and usage patterns.
 
 ### Configuration Management
 
