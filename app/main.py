@@ -8,8 +8,8 @@ import typer
 from rich import print as rich_print
 from rich.pretty import Pretty
 
-from src.evaluator import ConversationsEvaluator
-from src.generate_responses import GetAllLlmResponses
+from .evaluator import ConversationsEvaluator
+from .generate_responses import GetAllLlmResponses
 
 
 class MainArgs(TypedDict):

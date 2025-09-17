@@ -14,6 +14,7 @@ dependencies = [
   "tqdm>=4.67.1",
   "mypy>=1.16.1",
   "pydantic>=2.11.7",
+  "pydantic-settings>=2.0.0",
   "openai>=1.92.2",
   "pytest>=8.0.0",
 ]

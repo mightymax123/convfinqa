@@ -14,9 +14,9 @@ from src.prompting import PromptGenerator
 )
 def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substring: str) -> None:
     """
-    GIVEN a PromptGenerator using a specific strategy
-    WHEN generate_prompt is called with a ConvQA object
-    THEN the returned prompt should contain strategy-specific instructions
+    Given: A PromptGenerator using a specific strategy
+    When: generate_prompt is called with a ConvQA object
+    Then: The returned prompt should contain strategy-specific instructions
     """
     conversation: ConvQA = ConvQA(
         id="conv1",
@@ -37,9 +37,9 @@ def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substr
 
 def test_prompt_generator_invalid_strategy_raises() -> None:
     """
-    GIVEN an invalid strategy name not supported by PromptGenerator
-    WHEN initializing the PromptGenerator
-    THEN it should raise a ValueError listing available strategies
+    Given: An invalid strategy name not supported by PromptGenerator
+    When: Initializing the PromptGenerator
+    Then: It should raise a ValueError listing available strategies
     """
     with pytest.raises(ValueError) as e:
         PromptGenerator(strategy="nonsense")

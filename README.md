@@ -13,16 +13,30 @@ The codebase preprocesses the data and uses the OpenAI API to generate responses
 
 Firstly, please run the following command, this will enable you to configure your `.env` file with defaults that can be easily replaced.
 
-```bash
+```bashF
 cp sample.env .env
 ```
 
 The below table provides a brief summary of each environment variable 
 
-| Variable         | Default Value | Type   | Description                                                            |
-| ---------------- | ------------- | ------ | ---------------------------------------------------------------------- |
-| `LOG_LEVEL`      | `INFO`        | string | Sets the logging verbosity. Options: `DEBUG`, `INFO`, `WARN`, `ERROR`. |
-| `OPENAI_API_KEY` | `MY_API_KEY`  | string | Your OpenAI API key used to generate model responses.                  |
+| Variable            | Default Value                      | Type   | Description                                                            |
+| ------------------- | ---------------------------------- | ------ | ---------------------------------------------------------------------- |
+| `LOG_LEVEL`         | `INFO`                             | string | Sets the logging verbosity. Options: `DEBUG`, `INFO`, `WARN`, `ERROR`. |
+| `OPENAI_API_KEY`    | `MY_API_KEY`                       | string | Your OpenAI API key used to generate model responses.                  |
+| `DATA_PATH`         | `/app/data/convfinqa_dataset.json` | string | Path to the ConvFinQA dataset JSON file.                               |
+| `RANDOM_SEED`       | `42`                               | int    | Random seed for reproducible sampling and evaluation.                  |
+
+### Configuration Management
+
+The application uses Pydantic v2 for centralized configuration management. All environment variables are loaded and validated through the `Config` class in `app/config.py`. This provides:
+
+- **Type Safety**: All configuration values are type-checked and validated
+- **Default Values**: Sensible defaults are provided for all settings
+- **Documentation**: Each configuration field includes a description
+- **Validation**: Input validation ensures configuration integrity
+- **Centralization**: Single source of truth for all application settings
+
+The configuration is automatically loaded from the `.env` file and made available throughout the application via a global `config` instance.
 
 ### directory initialisation
 
@@ -149,5 +163,6 @@ The following points would be good next steps for further improve the codebase.
 - Evaluation of models from other cloud providers such as Gemini and Claude
 - Evaluation of opensource models, such as Llama and Mistral, can be done through Ollama or huggingface (highly dependent on compute resources)
 - Expansion of evaluation framework, other methods are more comprehensive than direct string matching
-- Additional prompt engineering, investigating how different templates can impact performanc
-- Allow config to be initialised through .yaml files
+- Additional prompt engineering, investigating how different templates can impact performance
+- Add async/await support for concurrent API calls to improve performance
+- Implement retry logic and rate limiting for robust API interactions

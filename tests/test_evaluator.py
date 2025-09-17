@@ -8,7 +8,11 @@ from src.evaluator import ConversationsEvaluator
 
 @pytest.fixture
 def perfect_match_conv() -> list[ConvQA]:
-    """Conversation with 100% correct answers."""
+    """
+    Given: A conversation where all LLM responses match expected answers
+    When: Creating test data for evaluation
+    Then: Return conversation with 100% accuracy potential
+    """
     return [
         ConvQA(
             id="conv-perfect",
@@ -22,7 +26,11 @@ def perfect_match_conv() -> list[ConvQA]:
 
 @pytest.fixture
 def partial_match_conv() -> list[ConvQA]:
-    """Conversation with 50% correct answers."""
+    """
+    Given: A conversation where half of LLM responses match expected answers
+    When: Creating test data for evaluation
+    Then: Return conversation with 50% accuracy potential
+    """
     return [
         ConvQA(
             id="conv-partial",
@@ -36,7 +44,11 @@ def partial_match_conv() -> list[ConvQA]:
 
 @pytest.fixture
 def no_match_conv() -> list[ConvQA]:
-    """Conversation with 0% correct answers."""
+    """
+    Given: A conversation where no LLM responses match expected answers
+    When: Creating test data for evaluation
+    Then: Return conversation with 0% accuracy potential
+    """
     return [
         ConvQA(
             id="conv-wrong",
@@ -48,12 +60,12 @@ def no_match_conv() -> list[ConvQA]:
     ]
 
 
-@patch("builtins.open", new_callable=mock_open)  # stops saving files to disk
+@patch("builtins.open", new_callable=mock_open)
 def test_evaluate_all_conversations_100_percent(mock_file: MagicMock, perfect_match_conv: list[ConvQA]) -> None:
     """
-    GIVEN a perfectly matching conversation
-    WHEN evaluate_all_conversations is called
-    THEN it should return 100.0 accuracy
+    Given: A conversation with perfectly matching LLM responses
+    When: evaluate_all_conversations is called
+    Then: It should return 100.0 accuracy
     """
     evaluator = ConversationsEvaluator(all_convs=perfect_match_conv)
     result: float = evaluator.evaluate_all_conversations()
@@ -63,9 +75,9 @@ def test_evaluate_all_conversations_100_percent(mock_file: MagicMock, perfect_ma
 @patch("builtins.open", new_callable=mock_open)
 def test_evaluate_all_conversations_50_percent(mock_file: MagicMock, partial_match_conv: list[ConvQA]) -> None:
     """
-    GIVEN a conversation with one correct and one incorrect answer
-    WHEN evaluate_all_conversations is called
-    THEN it should return 50.0 accuracy
+    Given: A conversation with one correct and one incorrect answer
+    When: evaluate_all_conversations is called
+    Then: It should return 50.0 accuracy
     """
     evaluator = ConversationsEvaluator(all_convs=partial_match_conv)
     result: float = evaluator.evaluate_all_conversations()
@@ -75,9 +87,9 @@ def test_evaluate_all_conversations_50_percent(mock_file: MagicMock, partial_mat
 @patch("builtins.open", new_callable=mock_open)
 def test_evaluate_all_conversations_0_percent(mock_file: MagicMock, no_match_conv: list[ConvQA]) -> None:
     """
-    GIVEN a conversation with all answers wrong
-    WHEN evaluate_all_conversations is called
-    THEN it should return 0.0 accuracy
+    Given: A conversation with all answers wrong
+    When: evaluate_all_conversations is called
+    Then: It should return 0.0 accuracy
     """
     evaluator = ConversationsEvaluator(all_convs=no_match_conv)
     result: float = evaluator.evaluate_all_conversations()

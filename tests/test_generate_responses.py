@@ -9,10 +9,9 @@ from src.generate_responses import GetAllLlmResponses
 @pytest.fixture
 def dummy_convqa() -> ConvQA:
     """
-    Provides a dummy ConvQA instance for use in unit tests.
-
-    Returns:
-        ConvQA: A sample conversation with example questions and answers.
+    Given: Sample financial conversation data needed for testing
+    When: Creating a ConvQA instance
+    Then: Return a dummy conversation with example questions and answers
     """
     return ConvQA(
         id="test-1",
@@ -22,13 +21,11 @@ def dummy_convqa() -> ConvQA:
     )
 
 
-def test_extract_list_from_valid_llm_response() -> (
-    None
-):  # Testing internal method because it's core to formatting logic
+def test_extract_list_from_valid_llm_response() -> None:
     """
-    GIVEN a well-formatted string LLM response
-    WHEN _extract_list_from_llm_response is called
-    THEN it should return the parsed Python list of strings
+    Given: A well-formatted string LLM response containing a Python list
+    When: _extract_list_from_llm_response is called
+    Then: It should return the parsed Python list of strings
     """
     response_handler = GetAllLlmResponses()
     response = "Here are your answers: ['100', '50']"
@@ -37,23 +34,23 @@ def test_extract_list_from_valid_llm_response() -> (
     assert result == ["100", "50"]
 
 
-def test_extract_list_from_empty_response() -> None:  # Testing internal method because it's core to formatting logic
+def test_extract_list_from_empty_response() -> None:
     """
-    GIVEN an empty string
-    WHEN _extract_list_from_llm_response is called
-    THEN it should return an empty list
+    Given: An empty string response
+    When: _extract_list_from_llm_response is called
+    Then: It should return an empty list
     """
     result = GetAllLlmResponses()._extract_list_from_llm_response("")
     assert result == []
 
 
-def test_extract_list_from_invalid_list() -> None:  # Testing internal method because it's core to formatting logic
+def test_extract_list_from_invalid_list() -> None:
     """
-    GIVEN a badly formatted response that resembles a list but isn't valid Python
-    WHEN _extract_list_from_llm_response is called
-    THEN it should return an empty list
+    Given: A badly formatted response that resembles a list but isn't valid Python
+    When: _extract_list_from_llm_response is called
+    Then: It should return an empty list
     """
-    invalid_response = "Answers: ['100', 50"  # missing closing bracket, invalid response
+    invalid_response = "Answers: ['100', 50"
     result = GetAllLlmResponses()._extract_list_from_llm_response(invalid_response)
     assert result == []
 
@@ -66,9 +63,9 @@ def test_get_conv_response_calls_llm_and_sets_attributes(
     dummy_convqa: ConvQA,
 ) -> None:
     """
-    GIVEN mocked prompt generator and LLM response
-    WHEN get_conv_response is called on a conversation
-    THEN it should update the conversation with LLM output and formatted response
+    Given: Mocked prompt generator and LLM response
+    When: get_conv_response is called on a conversation
+    Then: It should update the conversation with LLM output and formatted response
     """
     mock_generate_prompt.return_value = "Mocked prompt"
     mock_get_response.return_value = "['42', '84']"

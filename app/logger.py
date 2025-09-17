@@ -1,9 +1,10 @@
 import logging
-import os
+
+from .config import config
 
 
 def get_logger(name: str = __name__) -> logging.Logger:
-    """Create a logger based on environment variable LOG_LEVEL.
+    """Create a logger based on configuration.
 
     Args:
         name (str): Name of the logger. Defaults to the module's name.
@@ -15,10 +16,9 @@ def get_logger(name: str = __name__) -> logging.Logger:
     logger = logging.getLogger(name)
 
     if not logger.hasHandlers():
-        log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-        logger.setLevel(getattr(logging, log_level, logging.INFO))
+        logger.setLevel(getattr(logging, config.log_level, logging.INFO))
 
-        log_format = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         formatter = logging.Formatter(log_format)
 
         # Console handler

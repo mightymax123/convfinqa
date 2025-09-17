@@ -4,8 +4,8 @@ ConversationsEvaluator class for evaluating conversations with an LLM.
 
 import os
 
-from src.data_parser import ConvQA
-from src.logger import get_logger
+from .data_parser import ConvQA
+from .logger import get_logger
 
 logger = get_logger(__name__)
 

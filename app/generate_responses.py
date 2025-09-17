@@ -10,15 +10,13 @@ import re
 
 from tqdm import tqdm
 
-from src.data_parser import ConvFinQaDataParser, ConvQA
-from src.logger import get_logger
-from src.model_loader import OpenAiLlmResponse
-from src.prompting import PromptGenerator
+from .config import config
+from .data_parser import ConvFinQaDataParser, ConvQA
+from .logger import get_logger
+from .model_loader import OpenAiLlmResponse
+from .prompting import PromptGenerator
 
 logger = get_logger(__name__)
-
-SEED = 42
-DATA_PATH = "/app/data/convfinqa_dataset.json"
 
 
 class GetAllLlmResponses:
@@ -26,7 +24,7 @@ class GetAllLlmResponses:
         self,
         model_name: str = "gpt-4.1",
         prompting_strategy: str = "chain_of_thought",
-        data_path: str = DATA_PATH,
+        data_path: str | None = None,
         load_train_data: bool = False,
         sample_size: int = 100,
         use_seed: bool = True,
@@ -36,14 +34,16 @@ class GetAllLlmResponses:
         Args:
             model_name (str): The name of the LLM model to use.
             prompting_strategy (str): The strategy for generating prompts.
-            data_path (str): The path to the conversation dataset.
+            data_path (str | None): The path to the conversation dataset. If None, uses config default.
             load_train_data (bool): Whether to load training data or not. (default: False)
             sample_size (int): If specified, randomly sample this many conversations from the dataset.
             use_seed (bool): If True, sets a random seed for reproducibility. (default: True)
-            save_path (str): The path to save the responses in JSON format.
         """
         self.llm = OpenAiLlmResponse(model_name=model_name)
-        self.conv_parser = ConvFinQaDataParser(data_path=data_path)
+
+        actual_data_path = data_path if data_path is not None else config.data_path
+        self.conv_parser = ConvFinQaDataParser(data_path=actual_data_path)
+
         self.all_convs = self.conv_parser.get_all_docs_and_q_and_a_pairs(load_train_data=load_train_data)
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
@@ -54,8 +54,8 @@ class GetAllLlmResponses:
         if sample_size is not None:
             logger.info(f"sampling {sample_size} conversations from the dataset")
             if use_seed:
-                logger.info(f"Using fixed random seed {SEED} for reproducibility")
-                random.seed(SEED)
+                logger.info(f"Using fixed random seed {config.random_seed} for reproducibility")
+                random.seed(config.random_seed)
             self.all_convs = random.sample(self.all_convs, sample_size)
 
         subfolder = f"{model_name}_{prompting_strategy}"

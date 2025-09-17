@@ -4,39 +4,41 @@ parses ConvFinQa data from a JSON file and provides methods to access question-a
 
 import json
 import os
-from dataclasses import dataclass, field
 from typing import Any, Optional, cast
 
-from src.logger import get_logger
+from pydantic import BaseModel, Field
+
+from .logger import get_logger
 
 logger = get_logger(__name__)
 
 
-@dataclass
-class ConvQA:
+class ConvQA(BaseModel):
     """
     Class to represent a conversation question-answer pair.
 
-    Attributes:
-        id (str): Unique identifier for the conversation question-answer pair.
-        doc (str): The document text related to the question-answer pair.
-        questions (str): The questions asked in the conversation.
-        answers (str): The answers provided in the conversation.
-        llm_response (str, optional): The response from the language model. Defaults to None.
+    Provides validation and formatting for financial conversation data.
     """
 
-    id: str
-    doc: str
-    questions: list[str]
-    answers: list[str]
-    llm_response: Optional[str] = field(default=None)
-    formatted_llm_response: list[str] = field(default_factory=list)
+    id: str = Field(min_length=1, description="Unique identifier for the conversation")
+    doc: str = Field(min_length=1, description="The document text related to the conversation")
+    questions: list[str] = Field(min_length=1, description="List of questions in the conversation")
+    answers: list[str] = Field(min_length=1, description="List of answers for the conversation")
+    llm_response: Optional[str] = Field(default=None, description="Raw response from the language model")
+    formatted_llm_response: list[str] = Field(default_factory=list, description="Parsed LLM response as list")
 
-    def __post_init__(self) -> None:
-        """
-        Post-initialization processing to get the formatted prompt from the questions.
-        """
-        self.formatted_questions = " {next_question} ".join(self.questions)
+    @property
+    def formatted_questions(self) -> str:
+        """Format questions with delimiter for prompt generation."""
+        return " {next_question} ".join(self.questions)
+
+    def model_post_init(self, __context) -> None:
+        """Validate that questions and answers lists have the same length."""
+        if len(self.questions) != len(self.answers):
+            raise ValueError(
+                f"Document {self.id}: Questions and answers must have the same length. "
+                f"Got {len(self.questions)} questions and {len(self.answers)} answers."
+            )
 
 
 class ConvFinQaDataParser:
@@ -75,19 +77,17 @@ class ConvFinQaDataParser:
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding JSON from the file {data_path}: {e}") from e
 
-    def _get_q_and_a_pair(self, idx: int, load_train_data: bool = True) -> tuple[list[str], list[str]]:
+    def _get_q_and_a_pair(self, idx: int, data_type: str = "train") -> tuple[list[str], list[str]]:
         """
         Get a question and answer pair from the data by index.
 
         Args:
             idx (int): The index of the question-answer pair.
-            load_train_data (bool): Whether to use training data or test data.
+            data_type (str): The type of data to use ("train" or "dev").
 
         Returns:
             tuple[list[str], list[str]]: A tuple containing a list of questions and a list of answers.
         """
-        data_type = "train" if load_train_data else "dev"
-
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
 
@@ -98,63 +98,61 @@ class ConvFinQaDataParser:
 
         return questions, answers
 
-    def _get_doc_from_idx(self, idx: int, load_train_data: bool = True) -> str:
+    def _get_doc_from_idx(self, idx: int, data_type: str = "train") -> str:
         """
         Get the document from the data by index.
 
         Args:
             idx (int): The index of the document.
-            load_train_data (bool): Whether to use training data or test data.
+            data_type (str): The type of data to use ("train" or "dev").
 
         Returns:
             str: The document text.
         """
-        data_type = "train" if load_train_data else "dev"
-
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
 
-        return cast(str, self.data[data_type][idx]["doc"])
+        doc = self.data[data_type][idx]["doc"]
 
-    def _get_doc_id_from_idx(self, idx: int, load_train_data: bool = True) -> str:
+        if isinstance(doc, dict):
+            return str(doc)
+        return cast(str, doc)
+
+    def _get_doc_id_from_idx(self, idx: int, data_type: str = "train") -> str:
         """
         Get the document ID from the data by index.
 
         Args:
             idx (int): The index of the document.
-            load_train_data (bool): Whether to use training data or test data.
+            data_type (str): The type of data to use ("train" or "dev").
 
         Returns:
             str: The document ID.
         """
-        data_type = "train" if load_train_data else "dev"
-
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
 
         return cast(str, self.data[data_type][idx]["id"])
 
-    def _get_doc_and_q_and_a_pair(self, idx: int, load_train_data: bool = True) -> ConvQA:
+    def _get_doc_and_q_and_a_pair(self, idx: int, data_type: str = "train") -> ConvQA:
         """
         Get the document and a question-answer pair from the data by index.
 
         Args:
             idx (int): The index of the document and question-answer pair.
-            load_train_data (bool): Whether to use training data or test data.
+            data_type (str): The type of data to use ("train" or "dev").
 
         Returns:
             ConvQA: An instance of ConvQA containing the document, questions, and answers.
         """
-        logger.debug(
-            f"Fetching document and Q&A pair at index {idx} from {'train' if load_train_data else 'dev'} data."
-        )
+        logger.debug(f"Fetching document and Q&A pair at index {idx} from {data_type} data.")
 
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
 
-        id = self._get_doc_id_from_idx(idx, load_train_data)
-        doc = self._get_doc_from_idx(idx, load_train_data)
-        questions, answers = self._get_q_and_a_pair(idx, load_train_data)
+        id = self._get_doc_id_from_idx(idx, data_type)
+        doc = self._get_doc_from_idx(idx, data_type)
+        questions, answers = self._get_q_and_a_pair(idx, data_type)
         conv_qa = ConvQA(id=id, doc=doc, questions=questions, answers=answers)
         return conv_qa
 
@@ -173,7 +171,7 @@ class ConvFinQaDataParser:
         data_type = "train" if load_train_data else "dev"
 
         for idx in range(len(self.data[data_type])):
-            conv_qa = self._get_doc_and_q_and_a_pair(idx, load_train_data)
+            conv_qa = self._get_doc_and_q_and_a_pair(idx, data_type)
             all_docs.append(conv_qa)
 
         return all_docs

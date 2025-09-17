@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import cast
 
 from openai import OpenAI
 
-from src.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -84,6 +83,8 @@ class OpenAiLlmResponse(GetLlmResponse):
             prompt (str): The input prompt for the LLM.
         Returns:
             str: The output text from the LLM.
+        Raises:
+            ValueError: If the API returns an empty response.
         """
         logger.debug(f"sending prompt to openai model: {self.model_name}")
         response = self.client.chat.completions.create(
@@ -94,4 +95,8 @@ class OpenAiLlmResponse(GetLlmResponse):
             ],
         )
         logger.debug(f"Received response from openAI model: {self.model_name}")
-        return cast(str, response.choices[0].message.content)
+
+        content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("Received empty response from OpenAI API")
+        return content

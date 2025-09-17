@@ -9,7 +9,11 @@ from src.data_parser import ConvFinQaDataParser, ConvQA
 
 @pytest.fixture
 def mock_json_file_with_multiple_entries() -> Iterator[str]:
-    """Mocks a simple set of convfinqa entries"""
+    """
+    Given: Sample ConvFinQA data structure with train and dev splits
+    When: Creating a temporary JSON file with this data
+    Then: Return the file path for testing
+    """
     sample_data = {
         "train": [
             {
@@ -42,10 +46,9 @@ def test_get_all_docs_and_q_and_a_pairs(
     mock_json_file_with_multiple_entries: str,
 ) -> None:
     """
-    GIVEN a JSON file containing multiple ConvFinQa entries in the 'train' split,
-    WHEN get_all_docs_and_q_and_a_pairs() is called on the parsed data,
-    THEN it should return a list of ConvQA dataclass instances matching the number of entries,
-         each with correctly structured document IDs, text, questions, and answers.
+    Given: A JSON file containing multiple ConvFinQa entries in the train split
+    When: get_all_docs_and_q_and_a_pairs() is called on the parsed data
+    Then: It should return a list of ConvQA dataclass instances with correct structure
     """
     parser = ConvFinQaDataParser(mock_json_file_with_multiple_entries)
     results = parser.get_all_docs_and_q_and_a_pairs(load_train_data=True)
