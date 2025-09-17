@@ -60,9 +60,10 @@ class OpenAiLlmResponse(GetLlmResponse):
 
     def __init__(self, model_name: str = "gpt-4.1") -> None:
         """
-        r        Initialize the OpenAiLlmResponse class with a specified model name.
-                Args:
-                    model_name (str): The model to use for generating responses, must be a value from the ModelName enums. Defaults to GPT-4.1.
+        Initialize the OpenAiLlmResponse class with a specified model name.
+
+        Args:
+            model_name (str): The model to use for generating responses, must be a value from the ModelName enums. Defaults to GPT-4.1.
         """
         try:
             valid_model = ModelName(model_name)

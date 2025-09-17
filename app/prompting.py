@@ -148,8 +148,7 @@ class PromptGenerator:
         Generate a prompt using the specified strategy, given a document and questions.
 
         Args:
-            doc (dict): The financial document containing text and table.
-            questions (str): The formatted string of questions separated by {next_question}.
+            conversation (ConvQA): The conversation object containing document and questions.
 
         Returns:
             str: The generated prompt string.
