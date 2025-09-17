@@ -57,6 +57,17 @@ In total 4 LLM agents were evaluated with 3 prompting stratergies each, the foll
 | o4-mini     | Few-Shot           | 54.15        |
 
 
+**Visual Performance Analysis**: The chart below provides a comprehensive view of all model-strategy combinations, clearly illustrating the performance patterns across the evaluation.
+
+![ConvFinQA Results - Accuracy by Model and Prompting Strategy](images/accuracy_by_model_strategy.png)
+
+**Key Observations**:
+- **Few-Shot learning consistently outperforms** other strategies across all models, demonstrating the importance of structured examples for financial QA tasks
+- **o4-mini emerges as the top performer**, achieving 54.15% accuracy with Few-Shot prompting - significantly higher than other models
+- **Chain-of-Thought shows mixed results**, performing well with gpt-4o (31.37%) but poorly with other models, suggesting model-specific optimization needs
+- **Performance hierarchy**: o4-mini > gpt-4.1 > gpt-4o > gpt-4o-mini, indicating that model size and architecture matter significantly for this task
+
+
 
 
 ### Outputs
