@@ -13,7 +13,7 @@ from tqdm import tqdm
 from .config import config
 from .data_parser import ConvFinQaDataParser, ConvQA
 from .logger import get_logger
-from .model_loader import OpenAiLlmResponse
+from .model_loader import OpenAiLlmResponse, RetryConfig
 from .prompting import PromptGenerator
 
 logger = get_logger(__name__)
@@ -31,6 +31,7 @@ class GetAllLlmResponses:
     ):
         """
         Initializes the GetAllLlmResponses class with the specified model name, prompting strategy, data path, and whether to load training data.
+        
         Args:
             model_name (str): The name of the LLM model to use.
             prompting_strategy (str): The strategy for generating prompts.
@@ -39,7 +40,14 @@ class GetAllLlmResponses:
             sample_size (int): If specified, randomly sample this many conversations from the dataset.
             use_seed (bool): If True, sets a random seed for reproducibility. (default: True)
         """
-        self.llm = OpenAiLlmResponse(model_name=model_name)
+        retry_config = RetryConfig(
+            max_retries=config.max_retries,
+            base_delay=config.base_delay
+        )
+        self.llm = OpenAiLlmResponse(
+            model_name=model_name,
+            retry_config=retry_config
+        )
 
         actual_data_path = data_path if data_path is not None else config.data_path
         self.conv_parser = ConvFinQaDataParser(data_path=actual_data_path)
