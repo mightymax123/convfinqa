@@ -244,7 +244,7 @@ flowchart TD
 ```
 
 <details>
-<summary>� If the diagram above doesn't display properly, click here for a text version</summary>
+<summary>If the diagram above doesn't display properly, click here for a text version</summary>
 
 > **Note**: Some markdown previewers don't support Mermaid diagrams. Here's the same system flow in text format:
 
