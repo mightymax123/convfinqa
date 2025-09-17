@@ -243,6 +243,36 @@ flowchart TD
     style I fill:#e8f5e8
 ```
 
+<details>
+<summary>� If the diagram above doesn't display properly, click here for a text version</summary>
+
+> **Note**: Some markdown previewers don't support Mermaid diagrams. Here's the same system flow in text format:
+
+```
+ConvFinQA Dataset
+        ↓
+Data Parser & Sampler
+        ↓
+   Prompting Strategy
+    ↙    ↓    ↘
+Basic   CoT   Few-Shot
+   ↘     ↓     ↙
+   OpenAI API Client
+    (with retry logic)
+        ↓
+   LLM Response
+        ↓
+  Response Parser
+        ↓
+ Accuracy Evaluator
+        ↓
+ Structured Outputs
+    ↙        ↘
+JSON Results  Summary Reports
+```
+
+</details>
+
 ### Prompting Strategies
 
 - **Basic**: Minimal prompt serving as baseline performance
