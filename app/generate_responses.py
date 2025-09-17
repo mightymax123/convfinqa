@@ -10,11 +10,11 @@ import re
 
 from tqdm import tqdm
 
-from .config import config
-from .data_parser import ConvFinQaDataParser, ConvQA
-from .logger import get_logger
-from .model_loader import OpenAiLlmResponse, RetryConfig
-from .prompting import PromptGenerator
+from src.config import config
+from src.data_parser import ConvFinQaDataParser, ConvQA
+from src.logger import get_logger
+from src.model_loader import OpenAiLlmResponse, RetryConfig
+from src.prompting import PromptGenerator
 
 logger = get_logger(__name__)
 
