@@ -2,8 +2,14 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from app.data_parser import ConvQA
+from app.data_parser import ConvQA, FinancialDoc
 from app.evaluator import ConversationsEvaluator
+
+_SAMPLE_DOC = FinancialDoc(
+    pre_text="Sample pre text.",
+    post_text="Sample post text.",
+    table={"2023": {"revenue": 100.0}},
+)
 
 
 @pytest.fixture
@@ -16,7 +22,7 @@ def perfect_match_conv() -> list[ConvQA]:
     return [
         ConvQA(
             id="conv-perfect",
-            doc="Doc",
+            doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
             formatted_llm_response=["10", "20"],
@@ -34,7 +40,7 @@ def partial_match_conv() -> list[ConvQA]:
     return [
         ConvQA(
             id="conv-partial",
-            doc="Doc",
+            doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
             formatted_llm_response=["10", "WRONG"],
@@ -52,7 +58,7 @@ def no_match_conv() -> list[ConvQA]:
     return [
         ConvQA(
             id="conv-wrong",
-            doc="Doc",
+            doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
             formatted_llm_response=["WRONG", "WRONG"],

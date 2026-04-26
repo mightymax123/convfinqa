@@ -1,29 +1,20 @@
-from unittest.mock import MagicMock, patch
+"""
+Tests for OpenAiLlmResponse model loader.
+"""
 
-import pytest
+from unittest.mock import MagicMock, patch
 
 from app.model_loader import ModelName, OpenAiLlmResponse
 
 
-def test_valid_model_initialization() -> None:
+def test_valid_model_initialisation() -> None:
     """
-    Given: A valid model name supported by the system
-    When: An OpenAiLlmResponse is initialized with that model
-    Then: It should correctly set the model name to the expected enum value
+    Given: A valid ModelName enum value
+    When: An OpenAiLlmResponse is initialised with that model
+    Then: It should correctly set the model name to the enum's string value
     """
-    llm = OpenAiLlmResponse(model_name="gpt-4o")
+    llm = OpenAiLlmResponse(model_name=ModelName.GPT_4O)
     assert llm.model_name == ModelName.GPT_4O.value
-
-
-def test_invalid_model_raises_error() -> None:
-    """
-    Given: An invalid or unsupported model name
-    When: An OpenAiLlmResponse is initialized with that name
-    Then: It should raise a ValueError indicating an invalid model
-    """
-    with pytest.raises(ValueError) as e:
-        OpenAiLlmResponse(model_name="not-a-real-model")
-    assert "Invalid model name" in str(e.value)
 
 
 @patch("app.model_loader.OpenAiLlmResponse.get_response")
@@ -36,7 +27,7 @@ def test_get_response_returns_list_of_answers(mock_get_response: MagicMock) -> N
     mock_response = "['Revenue is money in.', 'Profit is money left over.']"
     mock_get_response.return_value = mock_response
 
-    llm = OpenAiLlmResponse(model_name="gpt-4o")
+    llm = OpenAiLlmResponse(model_name=ModelName.GPT_4O)
     prompt = "What is revenue? {next_question} What is profit?"
     result = llm.get_response(prompt)
 

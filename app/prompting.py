@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 
 from loguru import logger
 
 from app.data_parser import ConvQA
+
+
+class PromptingStrategy(str, Enum):
+    """Enum for supported prompting strategies."""
+
+    BASIC = "basic"
+    CHAIN_OF_THOUGHT = "chain_of_thought"
+    FEW_SHOT = "few_shot"
 
 
 class PromptStrategy(ABC):
@@ -120,27 +129,21 @@ class FewShotPromptStrategy(PromptStrategy):
 
 
 class PromptGenerator:
-    _STRATEGY_DICT: dict[str, type[PromptStrategy]] = {
-        "basic": BasicPromptStrategy,
-        "chain_of_thought": ChainOfThoughtPromptStrategy,
-        "few_shot": FewShotPromptStrategy,
+    _STRATEGY_DICT: dict[PromptingStrategy, type[PromptStrategy]] = {
+        PromptingStrategy.BASIC: BasicPromptStrategy,
+        PromptingStrategy.CHAIN_OF_THOUGHT: ChainOfThoughtPromptStrategy,
+        PromptingStrategy.FEW_SHOT: FewShotPromptStrategy,
     }
 
-    def __init__(self, strategy: str = "basic") -> None:
+    def __init__(self, strategy: PromptingStrategy = PromptingStrategy.BASIC) -> None:
         """
-        Initialize the PromptGenerator with a specific strategy.
+        Initialise the PromptGenerator with a specific strategy.
 
         Args:
-            strategy (str): The strategy to use for generating prompts, comes from the stratergy dict. Defaults to 'basic'.
+            strategy: The prompting strategy to use. Defaults to basic.
         """
-        try:
-            self._strategy = self._STRATEGY_DICT[strategy]()
-            logger.info(f"Using prompt strategy: {strategy}")
-        except KeyError as err:
-            logger.error(f"Invalid prompting strategy '{strategy}' provided.")
-            raise ValueError(
-                f"Strategy '{strategy}' is not recognized. Available strategies: {list(self._STRATEGY_DICT.keys())}"
-            ) from err
+        self._strategy = self._STRATEGY_DICT[strategy]()
+        logger.info(f"Using prompt strategy: {strategy.value}")
 
     def generate_prompt(self, conversation: ConvQA) -> str:
         """
@@ -154,7 +157,7 @@ class PromptGenerator:
         """
         logger.debug(f"Generated prompt for conversation {conversation.id}")
 
-        doc = conversation.doc
+        doc = conversation.doc.formatted_doc
         questions = conversation.formatted_questions
 
         return self._strategy.generate_prompt(doc, questions)

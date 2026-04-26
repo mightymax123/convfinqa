@@ -3,7 +3,6 @@ Configuration management using Pydantic v2 for environment variables.
 """
 
 from functools import lru_cache
-from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -14,15 +13,12 @@ class Settings(BaseSettings):
     App configuration loaded from environment variables.
 
     Attributes:
-        log_level (str): Logging level for the application.
         openai_api_key (str): API key for OpenAI.
         data_path (str): Path to the ConvFinQa dataset.
         random_seed (int): Random seed for reproducibility.
         max_retries (int): Maximum number of retry attempts for API calls.
         base_delay (float): Initial delay in seconds for exponential backoff.
     """
-
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     openai_api_key: str = Field(min_length=1)
 
