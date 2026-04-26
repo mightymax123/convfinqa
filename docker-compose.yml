@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    container_name: app
+    env_file: .env
+    command: sleep infinity
+    volumes:
+      - ./app:/code/app
+      - ./tests:/code/tests
+      - ./data:/data
+      - ./outputs:/code/outputs
+      - ./pyproject.toml:/code/pyproject.toml
+      - ./uv.lock:/code/uv.lock

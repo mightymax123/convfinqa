@@ -8,8 +8,15 @@ import typer
 from rich import print as rich_print
 from rich.pretty import Pretty
 
-from src.evaluator import ConversationsEvaluator
-from src.generate_responses import GetAllLlmResponses
+from app.evaluator import ConversationsEvaluator
+from app.generate_responses import GetAllLlmResponses
+
+app = typer.Typer(
+    name="convfinqa",
+    help="app for ConvFinQA dataset evaluation",
+    add_completion=True,
+    no_args_is_help=True,
+)
 
 
 class MainArgs(TypedDict):
@@ -18,14 +25,6 @@ class MainArgs(TypedDict):
     sample_size: int
     use_train_data: bool
     use_seed: bool
-
-
-app = typer.Typer(
-    name="main",
-    help="app for ConvFinQA dataset evaluation",
-    add_completion=True,
-    no_args_is_help=True,
-)
 
 
 def main(args: MainArgs) -> None:

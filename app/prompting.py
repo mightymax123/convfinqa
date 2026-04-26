@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
-from src.data_parser import ConvQA
-from src.logger import get_logger
+from loguru import logger
 
-logger = get_logger(__name__)
+from app.data_parser import ConvQA
 
 
 class PromptStrategy(ABC):

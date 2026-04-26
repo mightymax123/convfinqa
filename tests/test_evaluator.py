@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from src.data_parser import ConvQA
-from src.evaluator import ConversationsEvaluator
+from app.data_parser import ConvQA
+from app.evaluator import ConversationsEvaluator
 
 
 @pytest.fixture

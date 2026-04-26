@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   checks:
@@ -11,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Create environment file
         run: |
@@ -21,12 +24,5 @@ jobs:
       - name: Build containers
         run: docker compose build
 
-      - name: Run code checks
-        run: |
-          docker compose run --rm app uvx ruff format --check src/
-          docker compose run --rm app uvx ruff check src/
-          docker compose run --rm app uvx mypy src/
-
-      - name: Run tests
-        run: |
-          docker compose run --rm app uv run pytest tests/ -v
+      - name: Run pipeline
+        run: docker compose run --rm app bash -ic pipeline

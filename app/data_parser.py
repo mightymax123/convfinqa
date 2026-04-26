@@ -6,11 +6,8 @@ import json
 import os
 from typing import Any, cast
 
+from loguru import logger
 from pydantic import BaseModel, Field
-
-from src.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class ConvQA(BaseModel):
@@ -32,7 +29,7 @@ class ConvQA(BaseModel):
         """Format questions with delimiter for prompt generation."""
         return " {next_question} ".join(self.questions)
 
-    def model_post_init(self, __context) -> None:
+    def model_post_init(self, __context: Any) -> None:
         """Validate that questions and answers lists have the same length."""
         if len(self.questions) != len(self.answers):
             raise ValueError(

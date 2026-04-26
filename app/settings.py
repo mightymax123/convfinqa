@@ -2,13 +2,14 @@
 Configuration management using Pydantic v2 for environment variables.
 """
 
+from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
-class Config(BaseSettings):
+class Settings(BaseSettings):
     """
     App configuration loaded from environment variables.
 
@@ -21,11 +22,11 @@ class Config(BaseSettings):
         base_delay (float): Initial delay in seconds for exponential backoff.
     """
 
-    log_level: Literal["DEBUG", "INFO", "WARN", "ERROR"] = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     openai_api_key: str = Field(min_length=1)
 
-    data_path: str = "/app/data/convfinqa_dataset.json"
+    data_path: str = "/data/convfinqa_dataset.json"
 
     random_seed: int = Field(default=42, ge=0)
 
@@ -36,4 +37,7 @@ class Config(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
-config = Config()
+@lru_cache
+def get_settings() -> Settings:
+    """Return a cached Settings instance."""
+    return Settings()

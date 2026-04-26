@@ -4,10 +4,9 @@ ConversationsEvaluator class for evaluating conversations with an LLM.
 
 import os
 
-from src.data_parser import ConvQA
-from src.logger import get_logger
+from loguru import logger
 
-logger = get_logger(__name__)
+from app.data_parser import ConvQA
 
 
 class ConversationsEvaluator:
@@ -34,7 +33,7 @@ class ConversationsEvaluator:
 
         subfolder = f"{model_name}_{prompting_strategy}"
 
-        self.save_path = os.path.join("/app/outputs", subfolder, "eval.txt")
+        self.save_path = os.path.join("/code/outputs", subfolder, "eval.txt")
 
         os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
 
@@ -57,7 +56,7 @@ class ConversationsEvaluator:
         if not preds or total == 0:
             return 0.0
 
-        for t, p in zip(true, preds):
+        for t, p in zip(true, preds, strict=False):
             if t == p:
                 correct += 1
 

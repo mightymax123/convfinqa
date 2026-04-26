@@ -4,7 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from src.data_parser import ConvFinQaDataParser, ConvQA
+from app.data_parser import ConvFinQaDataParser, ConvQA
 
 
 @pytest.fixture
