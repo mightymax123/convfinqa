@@ -4,7 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from app.data_parser import ConvFinQaDataParser, ConvQA
+from app.data_parser import ConvFinQaDataParser, ConvQA, FinancialDoc
 
 
 @pytest.fixture
@@ -14,11 +14,16 @@ def mock_json_file_with_multiple_entries() -> Iterator[str]:
     When: Creating a temporary JSON file with this data
     Then: Return the file path for testing
     """
+    sample_doc = {
+        "pre_text": "Some introductory text.",
+        "post_text": "Some trailing text.",
+        "table": {"2023": {"revenue": 100.0, "profit": 20.0}},
+    }
     sample_data = {
         "train": [
             {
                 "id": "doc_001",
-                "doc": "Doc text 1.",
+                "doc": sample_doc,
                 "dialogue": {
                     "conv_questions": ["Q1", "Q2"],
                     "conv_answers": ["A1", "A2"],
@@ -26,7 +31,7 @@ def mock_json_file_with_multiple_entries() -> Iterator[str]:
             },
             {
                 "id": "doc_002",
-                "doc": "Doc text 2.",
+                "doc": sample_doc,
                 "dialogue": {
                     "conv_questions": ["Q3", "Q4"],
                     "conv_answers": ["A3", "A4"],
@@ -50,8 +55,8 @@ def test_get_all_docs_and_q_and_a_pairs(
     When: get_all_docs_and_q_and_a_pairs() is called on the parsed data
     Then: It should return a list of ConvQA dataclass instances with correct structure
     """
-    parser = ConvFinQaDataParser(mock_json_file_with_multiple_entries)
-    results = parser.get_all_docs_and_q_and_a_pairs(load_train_data=True)
+    parser = ConvFinQaDataParser(mock_json_file_with_multiple_entries, load_train_data=True)
+    results = parser.parse_all_conversations()
 
     assert isinstance(results, list)
     assert len(results) == 2
@@ -59,7 +64,7 @@ def test_get_all_docs_and_q_and_a_pairs(
     for convqa in results:
         assert isinstance(convqa, ConvQA)
         assert convqa.id.startswith("doc_")
-        assert isinstance(convqa.doc, str)
+        assert isinstance(convqa.doc, FinancialDoc)
         assert isinstance(convqa.questions, list)
         assert isinstance(convqa.answers, list)
         assert len(convqa.questions) == len(convqa.answers)

@@ -2,8 +2,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.data_parser import ConvQA
+from app.data_parser import ConvQA, FinancialDoc
 from app.generate_responses import GetAllLlmResponses
+
+_SAMPLE_DOC = FinancialDoc(
+    pre_text="Some introductory text.",
+    post_text="Some trailing text.",
+    table={"2023": {"revenue": 100.0}},
+)
 
 
 @pytest.fixture
@@ -15,7 +21,7 @@ def dummy_convqa() -> ConvQA:
     """
     return ConvQA(
         id="test-1",
-        doc="Some financial report.",
+        doc=_SAMPLE_DOC,
         questions=["What is revenue?", "What is profit?"],
         answers=["100", "50"],
     )

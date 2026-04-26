@@ -22,8 +22,8 @@ class RetryConfig(BaseModel):
     )
 
 
-class ModelName(Enum):
-    """Enum for OpenAI model names."""
+class ModelName(str, Enum):
+    """Enum for supported OpenAI model names."""
 
     GPT_4_1 = "gpt-4.1"
     GPT_4O = "gpt-4o"
@@ -44,15 +44,6 @@ class GetLlmResponse(ABC):
         "Return your answers as a Python list of strings, like: ['Answer1', 'Answer2', 'Answer3', ...]."
     )
 
-    def __init__(self, model_name: str) -> None:
-        """
-        Initialize the GetLlmResponse class with a specified model name.
-
-        Args:
-            model_name (str): The model to use for generating responses.
-        """
-        self.model_name = model_name
-
     @abstractmethod
     def get_response(self, prompt: str) -> str:
         """
@@ -72,23 +63,16 @@ class OpenAiLlmResponse(GetLlmResponse):
     OpenAI implementation of GetLlmResponse using the OpenAI Python API.
     """
 
-    def __init__(self, model_name: str = "gpt-4.1", retry_config: RetryConfig | None = None) -> None:
+    def __init__(self, model_name: ModelName = ModelName.GPT_4_1, retry_config: RetryConfig | None = None) -> None:
         """
-        Initialize the OpenAiLlmResponse class with a specified model name and retry configuration.
+        Initialise with a model name and optional retry configuration.
 
         Args:
-            model_name (str): The model to use for generating responses, must be a value from the ModelName enums. Defaults to GPT-4.1.
-            retry_config (RetryConfig | None): Configuration for retry behavior. If None, uses default configuration.
+            model_name: The OpenAI model to use. Defaults to GPT-4.1.
+            retry_config: Configuration for retry behaviour. If None, uses default configuration.
         """
-        try:
-            valid_model = ModelName(model_name)
-            logger.info(f"Using OpenAI model: {valid_model.value}")
-        except ValueError as err:
-            available_models = [model.value for model in ModelName]
-            logger.error(f"Invalid model name '{model_name}' provided.")
-            raise ValueError(f"Invalid model name: {model_name}. Must be one of {available_models}.") from err
-
-        super().__init__(model_name=valid_model.value)
+        logger.info(f"Using OpenAI model: {model_name.value}")
+        self.model_name = model_name.value
         self.client = OpenAI()
         self.retry_config = retry_config or RetryConfig()
 

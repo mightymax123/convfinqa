@@ -66,13 +66,13 @@ Example — `gpt-4o-mini` with basic prompting, 5 samples:
 docker compose exec app convfinqa --model-name gpt-4o-mini --prompting-strategy basic --sample-size 5
 ```
 
-| Argument | Type | Default | Acceptable Values | Description |
-| --- | --- | --- | --- | --- |
-| `--model-name` | string | `gpt-4.1` | `gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini` | Model to evaluate |
-| `--prompting-strategy` | string | `chain_of_thought` | `basic`, `chain_of_thought`, `few_shot` | Prompting strategy |
-| `--sample-size` | int | `10` | any positive integer | Number of samples |
-| `--use-train-data` | bool | `False` | `True`, `False` | Use training set instead of test set |
-| `--use-seed` | bool | `True` | `True`, `False` | Fixed random seed for reproducibility |
+| Argument               | Type   | Default            | Acceptable Values                             | Description                           |
+| ---------------------- | ------ | ------------------ | --------------------------------------------- | ------------------------------------- |
+| `--model-name`         | string | `gpt-4.1`          | `gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini` | Model to evaluate                     |
+| `--prompting-strategy` | string | `chain_of_thought` | `basic`, `chain_of_thought`, `few_shot`       | Prompting strategy                    |
+| `--sample-size`        | int    | `10`               | any positive integer                          | Number of samples                     |
+| `--use-train-data`     | bool   | `False`            | `True`, `False`                               | Use training set instead of test set  |
+| `--use-seed`           | bool   | `True`             | `True`, `False`                               | Fixed random seed for reproducibility |
 
 Results are written to `outputs/<model>_<strategy>/`:
 - `convfinqa_responses.json` — per-conversation details
@@ -80,16 +80,15 @@ Results are written to `outputs/<model>_<strategy>/`:
 
 ## Environment Variables
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | *(required)* | Your OpenAI API key |
-| `LOG_LEVEL` | `INFO` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `DATA_PATH` | `/data/convfinqa_dataset.json` | Path to dataset inside the container |
-| `RANDOM_SEED` | `42` | Seed for reproducible sampling |
-| `MAX_RETRIES` | `3` | Retry attempts for failed API calls |
-| `BASE_DELAY` | `2.0` | Initial backoff delay in seconds |
-| `UID` | *(set by `make init`)* | Host user ID — aligns container's non-root user with host |
-| `GID` | *(set by `make init`)* | Host group ID — aligns container's non-root group with host |
+| Variable         | Default                        | Description                                                 |
+| ---------------- | ------------------------------ | ----------------------------------------------------------- |
+| `OPENAI_API_KEY` | *(required)*                   | Your OpenAI API key                                         |
+| `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                        |
+| `RANDOM_SEED`    | `42`                           | Seed for reproducible sampling                              |
+| `MAX_RETRIES`    | `3`                            | Retry attempts for failed API calls                         |
+| `BASE_DELAY`     | `2.0`                          | Initial backoff delay in seconds                            |
+| `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host   |
+| `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host |
 
 <div align="center">
 

@@ -1,18 +1,18 @@
 import pytest
 
-from app.data_parser import ConvQA
-from app.prompting import PromptGenerator
+from app.data_parser import ConvQA, FinancialDoc
+from app.prompting import PromptGenerator, PromptingStrategy
 
 
 @pytest.mark.parametrize(
     "strategy, expected_substring",
     [
-        ("basic", "Answers (as a Python list of strings):"),
-        ("chain_of_thought", "Step-by-step reasoning"),
-        ("few_shot", "Answers:"),
+        (PromptingStrategy.BASIC, "Answers (as a Python list of strings):"),
+        (PromptingStrategy.CHAIN_OF_THOUGHT, "Step-by-step reasoning"),
+        (PromptingStrategy.FEW_SHOT, "Answers:"),
     ],
 )
-def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substring: str) -> None:
+def test_prompt_generator_returns_expected_prompt(strategy: PromptingStrategy, expected_substring: str) -> None:
     """
     Given: A PromptGenerator using a specific strategy
     When: generate_prompt is called with a ConvQA object
@@ -20,7 +20,11 @@ def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substr
     """
     conversation: ConvQA = ConvQA(
         id="conv1",
-        doc="Example financial document text.",
+        doc=FinancialDoc(
+            pre_text="Example introductory text.",
+            post_text="Example trailing text.",
+            table={"2023": {"revenue": 100.0}},
+        ),
         questions=["What is revenue?", "What is profit?"],
         answers=["Revenue is money in.", "Profit is money left over."],
     )
@@ -35,13 +39,11 @@ def test_prompt_generator_returns_expected_prompt(strategy: str, expected_substr
     assert "What is profit?" in prompt
 
 
-def test_prompt_generator_invalid_strategy_raises() -> None:
+def test_prompting_strategy_rejects_invalid_value() -> None:
     """
-    Given: An invalid strategy name not supported by PromptGenerator
-    When: Initializing the PromptGenerator
-    Then: It should raise a ValueError listing available strategies
+    Given: A string that is not a valid PromptingStrategy value
+    When: Constructing a PromptingStrategy from it
+    Then: It should raise a ValueError
     """
-    with pytest.raises(ValueError) as e:
-        PromptGenerator(strategy="nonsense")
-
-    assert "Strategy 'nonsense' is not recognized" in str(e.value)
+    with pytest.raises(ValueError):
+        PromptingStrategy("nonsense")
