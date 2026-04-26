@@ -60,8 +60,11 @@ def no_match_conv() -> list[ConvQA]:
     ]
 
 
+@patch("app.evaluator.os.makedirs")
 @patch("builtins.open", new_callable=mock_open)
-def test_evaluate_all_conversations_100_percent(mock_file: MagicMock, perfect_match_conv: list[ConvQA]) -> None:
+def test_evaluate_all_conversations_100_percent(
+    mock_file: MagicMock, mock_makedirs: MagicMock, perfect_match_conv: list[ConvQA]
+) -> None:
     """
     Given: A conversation with perfectly matching LLM responses
     When: evaluate_all_conversations is called
@@ -72,8 +75,11 @@ def test_evaluate_all_conversations_100_percent(mock_file: MagicMock, perfect_ma
     assert result == 100.0
 
 
+@patch("app.evaluator.os.makedirs")
 @patch("builtins.open", new_callable=mock_open)
-def test_evaluate_all_conversations_50_percent(mock_file: MagicMock, partial_match_conv: list[ConvQA]) -> None:
+def test_evaluate_all_conversations_50_percent(
+    mock_file: MagicMock, mock_makedirs: MagicMock, partial_match_conv: list[ConvQA]
+) -> None:
     """
     Given: A conversation with one correct and one incorrect answer
     When: evaluate_all_conversations is called
@@ -84,8 +90,11 @@ def test_evaluate_all_conversations_50_percent(mock_file: MagicMock, partial_mat
     assert result == 50.0
 
 
+@patch("app.evaluator.os.makedirs")
 @patch("builtins.open", new_callable=mock_open)
-def test_evaluate_all_conversations_0_percent(mock_file: MagicMock, no_match_conv: list[ConvQA]) -> None:
+def test_evaluate_all_conversations_0_percent(
+    mock_file: MagicMock, mock_makedirs: MagicMock, no_match_conv: list[ConvQA]
+) -> None:
     """
     Given: A conversation with all answers wrong
     When: evaluate_all_conversations is called
