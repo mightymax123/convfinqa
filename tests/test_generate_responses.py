@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.data_parser import ConvQA
-from src.generate_responses import GetAllLlmResponses
+from app.data_parser import ConvQA
+from app.generate_responses import GetAllLlmResponses
 
 
 @pytest.fixture
@@ -55,8 +55,8 @@ def test_extract_list_from_invalid_list() -> None:
     assert result == []
 
 
-@patch("src.generate_responses.OpenAiLlmResponse.get_response")
-@patch("src.generate_responses.PromptGenerator.generate_prompt")
+@patch("app.generate_responses.OpenAiLlmResponse.get_response")
+@patch("app.generate_responses.PromptGenerator.generate_prompt")
 def test_get_conv_response_calls_llm_and_sets_attributes(
     mock_generate_prompt: MagicMock,
     mock_get_response: MagicMock,

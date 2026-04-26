@@ -8,15 +8,13 @@ import os
 import random
 import re
 
+from loguru import logger
 from tqdm import tqdm
 
-from src.config import config
-from src.data_parser import ConvFinQaDataParser, ConvQA
-from src.logger import get_logger
-from src.model_loader import OpenAiLlmResponse, RetryConfig
-from src.prompting import PromptGenerator
-
-logger = get_logger(__name__)
+from app.data_parser import ConvFinQaDataParser, ConvQA
+from app.model_loader import OpenAiLlmResponse, RetryConfig
+from app.prompting import PromptGenerator
+from app.settings import get_settings
 
 
 class GetAllLlmResponses:
@@ -35,15 +33,16 @@ class GetAllLlmResponses:
         Args:
             model_name (str): The name of the LLM model to use.
             prompting_strategy (str): The strategy for generating prompts.
-            data_path (str | None): The path to the conversation dataset. If None, uses config default.
+            data_path (str | None): The path to the conversation dataset. If None, uses settings default.
             load_train_data (bool): Whether to load training data or not. (default: False)
             sample_size (int): If specified, randomly sample this many conversations from the dataset.
             use_seed (bool): If True, sets a random seed for reproducibility. (default: True)
         """
-        retry_config = RetryConfig(max_retries=config.max_retries, base_delay=config.base_delay)
+        settings = get_settings()
+        retry_config = RetryConfig(max_retries=settings.max_retries, base_delay=settings.base_delay)
         self.llm = OpenAiLlmResponse(model_name=model_name, retry_config=retry_config)
 
-        actual_data_path = data_path if data_path is not None else config.data_path
+        actual_data_path = data_path if data_path is not None else settings.data_path
         self.conv_parser = ConvFinQaDataParser(data_path=actual_data_path)
 
         self.all_convs = self.conv_parser.get_all_docs_and_q_and_a_pairs(load_train_data=load_train_data)
@@ -56,12 +55,12 @@ class GetAllLlmResponses:
         if sample_size is not None:
             logger.info(f"sampling {sample_size} conversations from the dataset")
             if use_seed:
-                logger.info(f"Using fixed random seed {config.random_seed} for reproducibility")
-                random.seed(config.random_seed)
+                logger.info(f"Using fixed random seed {settings.random_seed} for reproducibility")
+                random.seed(settings.random_seed)
             self.all_convs = random.sample(self.all_convs, sample_size)
 
         subfolder = f"{model_name}_{prompting_strategy}"
-        self.save_path = os.path.join("/app/outputs", subfolder, "convfinqa_responses.json")
+        self.save_path = os.path.join("/code/outputs", subfolder, "convfinqa_responses.json")
 
     def _get_conv_response(self, conv: ConvQA) -> None:
         """

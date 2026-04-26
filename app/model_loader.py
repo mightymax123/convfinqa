@@ -2,12 +2,9 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 
+from loguru import logger
 from openai import APIError, APITimeoutError, OpenAI, RateLimitError
 from pydantic import BaseModel, Field
-
-from src.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class RetryConfig(BaseModel):
@@ -164,5 +161,4 @@ class OpenAiLlmResponse(GetLlmResponse):
                 logger.error(f"Non-retryable error occurred: {type(e).__name__}: {str(e)}")
                 raise
 
-        # This should never be reached due to the logic above, but satisfies mypy requirements for pipeline.
         raise RuntimeError("Unexpected: retry loop completed without return or exception")

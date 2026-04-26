@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.model_loader import ModelName, OpenAiLlmResponse
+from app.model_loader import ModelName, OpenAiLlmResponse
 
 
 def test_valid_model_initialization() -> None:
@@ -26,7 +26,7 @@ def test_invalid_model_raises_error() -> None:
     assert "Invalid model name" in str(e.value)
 
 
-@patch("src.model_loader.OpenAiLlmResponse.get_response")
+@patch("app.model_loader.OpenAiLlmResponse.get_response")
 def test_get_response_returns_list_of_answers(mock_get_response: MagicMock) -> None:
     """
     Given: The get_response method is mocked to simulate an LLM output

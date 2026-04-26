@@ -21,8 +21,6 @@ dist/
 
 .*cache
 
-uv.lock
-
 app/outputs/*
 
 /app/pyproject.toml

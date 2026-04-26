@@ -1,7 +1,7 @@
 import pytest
 
-from src.data_parser import ConvQA
-from src.prompting import PromptGenerator
+from app.data_parser import ConvQA
+from app.prompting import PromptGenerator
 
 
 @pytest.mark.parametrize(

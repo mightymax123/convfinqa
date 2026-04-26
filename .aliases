@@ -1,8 +1,11 @@
-alias format='docker compose exec app uvx ruff format .'
-alias linting='docker compose exec app uvx ruff check --fix .'
-alias type-checks='docker compose exec app uvx mypy .'
-alias tests='docker compose exec app uv run pytest tests/'
+# Host-level convenience aliases for the convfinqa project.
+# Source this file in your shell to use:
+#   source .aliases
+#
+# These are for interactive terminal use only. Do not call from scripts or agents.
 
-alias checks='format && linting && type-checks && tests'
-
-alias pipeline='docker compose exec app uvx ruff format --check src/ && docker compose exec app uvx ruff check src/ && docker compose exec app uvx mypy src/ && docker compose exec app uv run pytest tests/'
+alias format='docker compose exec app bash -ic "format"'
+alias code-checks='docker compose exec app bash -ic "code-checks"'
+alias run-tests='docker compose exec app bash -ic "run-tests"'
+alias pipeline='docker compose exec app bash -ic "pipeline"'
+alias all-checks='docker compose exec app bash -ic "all-checks"'

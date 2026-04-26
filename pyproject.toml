@@ -1,29 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
 [project]
 name = "convfinqa-evaluation-pipeline"
 version = "0.1.0"
 description = "A data analytics pipeline to assess the capability of modern LLMs to answer a multi turn conversational financial dataset"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 dependencies = [
   "typer==0.12.0",
   "click==8.1.7",
-  "dotenv>=0.9.9",
-  "pandas>=2.2.3",
-  "ruff>=0.11.10",
-  "pylit>=0.8.0",
-  "ipykernel>=6.29.5",
   "tqdm>=4.67.1",
-  "mypy>=1.16.1",
+  "loguru>=0.7.0",
   "pydantic>=2.11.7",
   "pydantic-settings>=2.0.0",
   "openai>=1.92.2",
+  "rich>=13.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.11.10",
+  "pyrefly>=0.17.0",
   "pytest>=8.0.0",
+  "coverage>=7.0.0",
 ]
 
 [project.scripts]
-convfinqa = "app.main:main"
+convfinqa = "app.main:app"
+
+[tool.uv]
+package = true
 
 [tool.ruff]
 line-length = 120
+target-version = "py313"
+
+[tool.ruff.format]
+indent-style = "space"
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 select = [
@@ -34,13 +52,13 @@ select = [
     "UP", # modern syntax updates
     "B",  # flake8 common pitfalls & best practices
     "Q",  # flake8 consistent quotes
-    "N",  # naming conventions,
+    "N",  # naming conventions
 ]
 
 ignore = [
-    "D101",      # Missing docstring in public class (not critical for this project)
-    "PLR2004",   # Magic value used in comparison (test assertions use literals)
-    "E501",      # Line too long (formatter can't auto-fix these)
+    "D101",    # Missing docstring in public class
+    "PLR2004", # Magic value used in comparison
+    "E501",    # Line too long (formatter can't auto-fix these)
 ]
 
 extend-select = [
@@ -54,5 +72,23 @@ extend-select = [
     "T201",
 ]
 
-[tool.mypy]
-ignore_missing_imports = true
+[tool.pyrefly]
+project-includes = ["app", "tests"]
+project-excludes = ["vendor/*", "venv/*", "venvs/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["tests/*", "*/tests/*", "*/venv/*", "*/.venv/*"]
+
+[tool.coverage.report]
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "raise NotImplementedError",
+]
