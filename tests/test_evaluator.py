@@ -25,7 +25,7 @@ def perfect_match_conv() -> list[ConvQA]:
             doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
-            formatted_llm_response=["10", "20"],
+            llm_answers=["10", "20"],
         )
     ]
 
@@ -43,7 +43,7 @@ def partial_match_conv() -> list[ConvQA]:
             doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
-            formatted_llm_response=["10", "WRONG"],
+            llm_answers=["10", "WRONG"],
         )
     ]
 
@@ -61,7 +61,7 @@ def no_match_conv() -> list[ConvQA]:
             doc=_SAMPLE_DOC,
             questions=["Q1", "Q2"],
             answers=["10", "20"],
-            formatted_llm_response=["WRONG", "WRONG"],
+            llm_answers=["WRONG", "WRONG"],
         )
     ]
 

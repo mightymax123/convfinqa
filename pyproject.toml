@@ -17,8 +17,8 @@ dependencies = [
   "loguru>=0.7.0",
   "pydantic>=2.11.7",
   "pydantic-settings>=2.0.0",
-  "openai>=1.92.2",
   "rich>=13.0.0",
+  "pydantic-ai>=0.4",
 ]
 
 [dependency-groups]
@@ -27,6 +27,7 @@ dev = [
   "pyrefly>=0.17.0",
   "pytest>=8.0.0",
   "coverage>=7.0.0",
+  "pytest-asyncio>=0.24.0",
 ]
 
 [project.scripts]
@@ -78,6 +79,7 @@ project-excludes = ["vendor/*", "venv/*", "venvs/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true

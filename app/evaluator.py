@@ -6,8 +6,8 @@ import os
 
 from loguru import logger
 
+from app.agent import ModelName
 from app.data_parser import ConvQA
-from app.model_loader import ModelName
 from app.prompting import PromptingStrategy
 
 
@@ -51,7 +51,7 @@ class ConversationsEvaluator:
         Returns:
             Percentage of answers that exactly match the ground truth.
         """
-        preds = [pred.strip() for pred in conv.formatted_llm_response if pred is not None]
+        preds = [pred.strip() for pred in conv.llm_answers if pred is not None]
         true = [ans.strip() for ans in conv.answers if ans is not None]
 
         total = len(true)

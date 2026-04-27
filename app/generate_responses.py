@@ -2,17 +2,15 @@
 Generate LLM responses for conversations in the ConvFinQA dataset.
 """
 
-import ast
 import json
 import os
 import random
-import re
 
 from loguru import logger
 from tqdm import tqdm
 
+from app.agent import LlmAnswers, ModelName, build_agent, get_response
 from app.data_parser import ConvFinQaDataParser, ConvQA
-from app.model_loader import ModelName, OpenAiLlmResponse, RetryConfig
 from app.prompting import PromptGenerator, PromptingStrategy
 from app.settings import get_settings
 
@@ -37,16 +35,16 @@ class GetAllLlmResponses:
             use_seed: If True, sets a fixed random seed for reproducibility.
         """
         settings = get_settings()
-        retry_config = RetryConfig(max_retries=settings.max_retries, base_delay=settings.base_delay)
-        self.llm = OpenAiLlmResponse(model_name=model_name, retry_config=retry_config)
 
-        self.conv_parser = ConvFinQaDataParser(data_path=settings.data_path, load_train_data=load_train_data)
-        self.all_convs = self.conv_parser.parse_all_conversations()
-
+        self.agent = build_agent(model_name=model_name, max_retries=settings.max_retries)
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
+        conv_parser = ConvFinQaDataParser(data_path=settings.data_path, load_train_data=load_train_data)
+        self.all_convs = conv_parser.parse_all_conversations()
+
         logger.info(
-            f"Initialising GetAllLlmResponses with model: {model_name.value}, and prompting strategy: {prompting_strategy.value}"
+            f"Initialising GetAllLlmResponses with model: {model_name.value}, "
+            f"and prompting strategy: {prompting_strategy.value}"
         )
 
         if sample_size is not None:
@@ -59,57 +57,24 @@ class GetAllLlmResponses:
         subfolder = f"{model_name.value}_{prompting_strategy.value}"
         self.save_path = os.path.join("/code/outputs", subfolder, "convfinqa_responses.json")
 
-    def _extract_list_from_llm_response(self, llm_response: str) -> list[str]:
-        """
-        Extracts the last list of strings from an LLM response (should only be 1 list but to cover edge cases).
-
-        Args:
-            llm_response (str): Full text response from the LLM.
-
-        Returns:
-            list[str]: The extracted list of strings, or an empty list if not found or invalid.
-        """
-        if not llm_response:
-            logger.warning("Received empty LLM response.")
-            return []
-
-        matches = re.findall(r"\[[^\[\]]+\]", llm_response)
-        if not matches:
-            logger.warning("No valid list found in the LLM response.")
-            return []
-
-        last = matches[-1]
-        try:
-            result = ast.literal_eval(last)
-            if isinstance(result, list) and all(isinstance(x, str) for x in result):
-                return result
-        except (SyntaxError, ValueError):
-            pass
-
-        return []
-
     def _get_conv_response(self, conv: ConvQA) -> None:
-        """
-        Get the LLM response for a single conversation append the original and formatted responses to the conversation object.
+        """Get the LLM response for a single conversation and store structured answers.
 
         Args:
-            conv (ConvQA): The conversation object containing questions and answers.
+            conv: The conversation object containing questions and answers.
         """
         logger.debug(f"Generating prompt and requesting response for conversation ID: {conv.id}")
 
         prompt = self.prompt_gen.generate_prompt(conv)
-        response = self.llm.get_response(prompt=prompt)
-        conv.llm_response = response
-        conv.formatted_llm_response = self._extract_list_from_llm_response(response)
+        llm_answers: LlmAnswers = get_response(self.agent, prompt)
+        conv.llm_answers = llm_answers.answers
 
         logger.debug(f"Response for conversation ID {conv.id} received and processed.")
 
     def _save_conversations_to_json(self) -> None:
-        """
-        Save a list of ConvQA objects to a JSON file.
+        """Save the list of conversations with LLM answers to a JSON file.
 
-
-        raises:
+        Raises:
             ValueError: If the list of conversations is empty.
         """
         if not self.all_convs:
@@ -122,10 +87,10 @@ class GetAllLlmResponses:
         data = [
             {
                 "id": conv.id,
-                "doc": conv.doc,
+                "doc": conv.doc.model_dump(),
                 "questions": conv.questions,
                 "answers": conv.answers,
-                "formatted_llm_response": conv.formatted_llm_response,
+                "llm_answers": conv.llm_answers,
             }
             for conv in self.all_convs
         ]
@@ -137,8 +102,13 @@ class GetAllLlmResponses:
         logger.info(f"Conversations saved successfully to {self.save_path}")
 
     def get_all_responses(self) -> list[ConvQA]:
-        """
-        Get LLM responses for all conversations in the dataset.
+        """Get LLM responses for all conversations in the dataset.
+
+        Returns:
+            The list of conversations with llm_answers populated.
+
+        Raises:
+            RuntimeError: If any individual conversation fails to process.
         """
         for conv in tqdm(self.all_convs, desc="Processing conversations", unit="conv"):
             try:

@@ -21,12 +21,11 @@ dist/
 
 .*cache
 
-app/outputs/*
 
 /app/pyproject.toml
 /app/README.md
 /app.uv.lock
 /app/.venv
 
-outputs/*
+
 

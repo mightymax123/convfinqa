@@ -60,8 +60,7 @@ class ConvQA(BaseModel):
     doc: FinancialDoc = Field(description="The structured financial document related to the conversation")
     questions: list[str] = Field(min_length=1, description="List of questions in the conversation")
     answers: list[str] = Field(min_length=1, description="List of answers for the conversation")
-    llm_response: str | None = Field(default=None, description="Raw response from the language model")
-    formatted_llm_response: list[str] = Field(default_factory=list, description="Parsed LLM response as list")
+    llm_answers: list[str] = Field(default_factory=list, description="Structured answers returned by the LLM.")
 
     @property
     def formatted_questions(self) -> str:

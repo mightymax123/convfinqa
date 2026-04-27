@@ -7,9 +7,9 @@ from pydantic import BaseModel, Field
 from rich import print as rich_print
 from rich.pretty import Pretty
 
+from app.agent import ModelName
 from app.evaluator import ConversationsEvaluator
 from app.generate_responses import GetAllLlmResponses
-from app.model_loader import ModelName
 from app.prompting import PromptingStrategy
 
 app = typer.Typer(
