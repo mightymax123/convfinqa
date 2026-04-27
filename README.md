@@ -86,7 +86,6 @@ Results are written to `outputs/<model>_<strategy>/`:
 | `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                        |
 | `RANDOM_SEED`    | `42`                           | Seed for reproducible sampling                              |
 | `MAX_RETRIES`    | `3`                            | Retry attempts for failed API calls                         |
-| `BASE_DELAY`     | `2.0`                          | Initial backoff delay in seconds                            |
 | `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host   |
 | `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host |
 

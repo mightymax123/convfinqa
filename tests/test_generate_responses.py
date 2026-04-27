@@ -1,6 +1,11 @@
+"""
+Tests for GetAllLlmResponses in app/generate_responses.py.
+"""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic_ai.models.test import TestModel
 
 from app.data_parser import ConvQA, FinancialDoc
 from app.generate_responses import GetAllLlmResponses
@@ -15,9 +20,9 @@ _SAMPLE_DOC = FinancialDoc(
 @pytest.fixture
 def dummy_convqa() -> ConvQA:
     """
-    Given: Sample financial conversation data needed for testing
-    When: Creating a ConvQA instance
-    Then: Return a dummy conversation with example questions and answers
+    GIVEN sample financial conversation data needed for testing,
+    WHEN creating a ConvQA instance,
+    THEN return a dummy conversation with example questions and answers.
     """
     return ConvQA(
         id="test-1",
@@ -27,59 +32,93 @@ def dummy_convqa() -> ConvQA:
     )
 
 
-def test_extract_list_from_valid_llm_response() -> None:
+@pytest.fixture
+def generator() -> GetAllLlmResponses:
     """
-    Given: A well-formatted string LLM response containing a Python list
-    When: _extract_list_from_llm_response is called
-    Then: It should return the parsed Python list of strings
+    GIVEN a mocked data parser and agent,
+    WHEN creating a GetAllLlmResponses instance,
+    THEN return an instance with a minimal in-memory conversation list.
     """
-    response_handler = GetAllLlmResponses()
-    response = "Here are your answers: ['100', '50']"
-    result = response_handler._extract_list_from_llm_response(response)
-
-    assert result == ["100", "50"]
-
-
-def test_extract_list_from_empty_response() -> None:
-    """
-    Given: An empty string response
-    When: _extract_list_from_llm_response is called
-    Then: It should return an empty list
-    """
-    result = GetAllLlmResponses()._extract_list_from_llm_response("")
-    assert result == []
+    with patch("app.generate_responses.ConvFinQaDataParser") as mock_parser_cls:
+        mock_parser = MagicMock()
+        mock_parser.parse_all_conversations.return_value = []
+        mock_parser_cls.return_value = mock_parser
+        instance = GetAllLlmResponses(sample_size=0, use_seed=False)
+    return instance
 
 
-def test_extract_list_from_invalid_list() -> None:
-    """
-    Given: A badly formatted response that resembles a list but isn't valid Python
-    When: _extract_list_from_llm_response is called
-    Then: It should return an empty list
-    """
-    invalid_response = "Answers: ['100', 50"
-    result = GetAllLlmResponses()._extract_list_from_llm_response(invalid_response)
-    assert result == []
+class TestGetConvResponse:
+    def test_get_conv_response_sets_llm_answers(
+        self,
+        generator: GetAllLlmResponses,
+        dummy_convqa: ConvQA,
+    ) -> None:
+        """
+        GIVEN a TestModel configured to return structured answers,
+        WHEN _get_conv_response is called on a conversation,
+        THEN conv.llm_answers is populated with the model's answers.
+        """
+        test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
+
+        with generator.agent.override(model=test_model):
+            generator._get_conv_response(dummy_convqa)
+
+        assert dummy_convqa.llm_answers == ["42", "84"]
+
+    def test_get_conv_response_uses_prompt_generator(
+        self,
+        generator: GetAllLlmResponses,
+        dummy_convqa: ConvQA,
+    ) -> None:
+        """
+        GIVEN a mocked prompt generator and a TestModel,
+        WHEN _get_conv_response is called,
+        THEN the prompt generator is called once with the conversation.
+        """
+        test_model = TestModel(custom_output_args={"answers": ["42"]})
+
+        with patch.object(generator.prompt_gen, "generate_prompt", return_value="Mocked prompt") as mock_prompt:
+            with generator.agent.override(model=test_model):
+                generator._get_conv_response(dummy_convqa)
+
+        mock_prompt.assert_called_once_with(dummy_convqa)
 
 
-@patch("app.generate_responses.OpenAiLlmResponse.get_response")
-@patch("app.generate_responses.PromptGenerator.generate_prompt")
-def test_get_conv_response_calls_llm_and_sets_attributes(
-    mock_generate_prompt: MagicMock,
-    mock_get_response: MagicMock,
-    dummy_convqa: ConvQA,
-) -> None:
-    """
-    Given: Mocked prompt generator and LLM response
-    When: get_conv_response is called on a conversation
-    Then: It should update the conversation with LLM output and formatted response
-    """
-    mock_generate_prompt.return_value = "Mocked prompt"
-    mock_get_response.return_value = "['42', '84']"
+class TestGetAllResponses:
+    def test_get_all_responses_processes_all_conversations(
+        self,
+        generator: GetAllLlmResponses,
+    ) -> None:
+        """
+        GIVEN a generator with two conversations and a TestModel,
+        WHEN get_all_responses is called,
+        THEN all conversations have llm_answers populated.
+        """
+        conv1 = ConvQA(id="c1", doc=_SAMPLE_DOC, questions=["Q1"], answers=["A1"])
+        conv2 = ConvQA(id="c2", doc=_SAMPLE_DOC, questions=["Q2"], answers=["A2"])
+        generator.all_convs = [conv1, conv2]
 
-    generator = GetAllLlmResponses()
-    generator._get_conv_response(dummy_convqa)
+        test_model = TestModel(custom_output_args={"answers": ["answer"]})
 
-    assert dummy_convqa.llm_response == "['42', '84']"
-    assert dummy_convqa.formatted_llm_response == ["42", "84"]
-    mock_generate_prompt.assert_called_once_with(dummy_convqa)
-    mock_get_response.assert_called_once_with(prompt="Mocked prompt")
+        with patch.object(generator, "_save_conversations_to_json"):
+            with generator.agent.override(model=test_model):
+                result = generator.get_all_responses()
+
+        assert result[0].llm_answers == ["answer"]
+        assert result[1].llm_answers == ["answer"]
+
+    def test_get_all_responses_raises_on_failure(
+        self,
+        generator: GetAllLlmResponses,
+    ) -> None:
+        """
+        GIVEN a conversation that causes the agent to raise an exception,
+        WHEN get_all_responses is called,
+        THEN a RuntimeError is raised with the conversation ID.
+        """
+        conv = ConvQA(id="fail-1", doc=_SAMPLE_DOC, questions=["Q?"], answers=["A"])
+        generator.all_convs = [conv]
+
+        with patch.object(generator, "_get_conv_response", side_effect=Exception("boom")):
+            with pytest.raises(RuntimeError, match="fail-1"):
+                generator.get_all_responses()
