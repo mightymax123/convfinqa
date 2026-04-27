@@ -10,6 +10,7 @@ from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from app.settings import get_settings
+from app.tools import add, divide, exp, greater, multiply, percentage_change, subtract
 
 
 class ModelName(str, Enum):
@@ -26,7 +27,11 @@ _SYSTEM_PROMPT = (
     "You will receive a sequence of related questions in a single string, "
     "separated by the token `{next_question}`.\n"
     "Your task is to answer each question in order.\n"
-    "Return your answers as a list of strings, one per question."
+    "Return your answers as a list of strings, one per question.\n"
+    "For any numerical computation (addition, subtraction, multiplication, division, "
+    "percentage change, comparisons, or exponentiation), you must call the appropriate "
+    "tool rather than computing the value yourself. "
+    "Only produce your final structured answer once all required tool calls have been made."
 )
 
 
@@ -56,6 +61,7 @@ def build_agent(model_name: ModelName, max_retries: int) -> Agent[None, LlmAnswe
         output_type=LlmAnswers,
         instructions=_SYSTEM_PROMPT,
         retries=max_retries,
+        tools=[add, subtract, multiply, divide, percentage_change, greater, exp],
     )
 
 

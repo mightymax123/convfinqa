@@ -60,7 +60,7 @@ class TestGetConvResponse:
         """
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
-        with generator.agent.override(model=test_model):
+        with generator.agent.override(model=test_model, tools=[]):
             generator._get_conv_response(dummy_convqa)
 
         assert dummy_convqa.llm_answers == ["42", "84"]
@@ -78,7 +78,7 @@ class TestGetConvResponse:
         test_model = TestModel(custom_output_args={"answers": ["42"]})
 
         with patch.object(generator.prompt_gen, "generate_prompt", return_value="Mocked prompt") as mock_prompt:
-            with generator.agent.override(model=test_model):
+            with generator.agent.override(model=test_model, tools=[]):
                 generator._get_conv_response(dummy_convqa)
 
         mock_prompt.assert_called_once_with(dummy_convqa)
@@ -101,7 +101,7 @@ class TestGetAllResponses:
         test_model = TestModel(custom_output_args={"answers": ["answer"]})
 
         with patch.object(generator, "_save_conversations_to_json"):
-            with generator.agent.override(model=test_model):
+            with generator.agent.override(model=test_model, tools=[]):
                 result = generator.get_all_responses()
 
         assert result[0].llm_answers == ["answer"]
