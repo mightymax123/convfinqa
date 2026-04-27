@@ -8,6 +8,8 @@ from pydantic_ai.models.test import TestModel
 
 from app.agent import LlmAnswers, ModelName, build_agent, get_response
 
+_EXPECTED_TOOLS = {"add", "subtract", "multiply", "divide", "percentage_change", "greater", "exp"}
+
 
 class TestLlmAnswers:
     def test_valid_answers_accepted(self) -> None:
@@ -42,6 +44,17 @@ class TestBuildAgent:
 
         assert isinstance(agent, Agent)
 
+    def test_build_agent_registers_all_tools(self) -> None:
+        """
+        GIVEN a valid model name and max_retries value,
+        WHEN build_agent is called,
+        THEN all expected arithmetic tools are registered on the agent.
+        """
+        agent = build_agent(model_name=ModelName.GPT_4O, max_retries=1)
+        registered = set(agent._function_toolset.tools.keys())
+
+        assert registered == _EXPECTED_TOOLS
+
 
 class TestGetResponse:
     def test_get_response_returns_llm_answers(self) -> None:
@@ -53,7 +66,7 @@ class TestGetResponse:
         agent = build_agent(model_name=ModelName.GPT_4O, max_retries=1)
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
-        with agent.override(model=test_model):
+        with agent.override(model=test_model, tools=[]):
             result = get_response(agent, "What is revenue? {next_question} What is profit?")
 
         assert isinstance(result, LlmAnswers)
@@ -68,7 +81,7 @@ class TestGetResponse:
         agent = build_agent(model_name=ModelName.GPT_4O, max_retries=1)
         test_model = TestModel(custom_output_args={"answers": ["100"]})
 
-        with agent.override(model=test_model):
+        with agent.override(model=test_model, tools=[]):
             result = get_response(agent, "What is the total revenue?")
 
         assert result.answers == ["100"]
