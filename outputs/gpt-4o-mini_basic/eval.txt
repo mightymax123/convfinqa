@@ -1,4 +1,4 @@
 Model: gpt-4o-mini
 Prompting Strategy: basic
-Average Accuracy: 25.00%
-sample_size: 2
+Average Accuracy: 43.43%
+sample_size: 5
