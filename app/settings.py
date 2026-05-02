@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     Attributes:
         openai_api_key: API key for OpenAI.
         data_path: Path to the ConvFinQa dataset.
-        random_seed: Random seed for reproducibility.
         max_retries: Number of retries for both pydantic-ai tool-call / output-validation
             attempts and OpenAI SDK HTTP retries (e.g. on 429 / 5xx responses).
     """
@@ -23,8 +22,6 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(min_length=1)
 
     data_path: str = "/data/convfinqa_dataset.json"
-
-    random_seed: int = Field(default=42, ge=0)
 
     max_retries: int = Field(default=10, ge=0, le=10)
 

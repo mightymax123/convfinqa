@@ -18,11 +18,11 @@ from app.settings import get_settings
 class GetAllLlmResponses:
     def __init__(
         self,
-        model_name: ModelName = ModelName.GPT_4_1,
-        prompting_strategy: PromptingStrategy = PromptingStrategy.CHAIN_OF_THOUGHT,
-        load_train_data: bool = False,
-        sample_size: int = 100,
-        use_seed: bool = True,
+        model_name: ModelName,
+        prompting_strategy: PromptingStrategy,
+        load_train_data: bool,
+        sample_size: int,
+        seed: int | None,
     ):
         """
         Initialise with model, prompting strategy, and sampling options.
@@ -32,7 +32,7 @@ class GetAllLlmResponses:
             prompting_strategy: The strategy for generating prompts.
             load_train_data: Whether to load training data instead of the dev set.
             sample_size: Number of conversations to randomly sample from the dataset.
-            use_seed: If True, sets a fixed random seed for reproducibility.
+            seed: Random seed for reproducible sampling. If None, sampling is non-deterministic.
         """
         settings = get_settings()
 
@@ -52,9 +52,9 @@ class GetAllLlmResponses:
 
         if sample_size is not None:
             logger.info(f"Sampling {sample_size} conversations from the dataset")
-            if use_seed:
-                logger.info(f"Using fixed random seed {settings.random_seed} for reproducibility")
-                random.seed(settings.random_seed)
+            if seed is not None:
+                logger.info(f"Using fixed random seed {seed} for reproducibility")
+                random.seed(seed)
             self.all_convs = random.sample(self.all_convs, sample_size)
 
         subfolder = f"{model_name.value}_{prompting_strategy.value}"

@@ -135,12 +135,12 @@ class PromptGenerator:
         PromptingStrategy.FEW_SHOT: FewShotPromptStrategy,
     }
 
-    def __init__(self, strategy: PromptingStrategy = PromptingStrategy.BASIC) -> None:
+    def __init__(self, strategy: PromptingStrategy) -> None:
         """
         Initialise the PromptGenerator with a specific strategy.
 
         Args:
-            strategy: The prompting strategy to use. Defaults to basic.
+            strategy: The prompting strategy to use.
         """
         self._strategy = self._STRATEGY_DICT[strategy]()
         logger.info(f"Using prompt strategy: {strategy.value}")

@@ -83,7 +83,7 @@ class ConvFinQaDataParser:
     A class to parse ConvFinQa data from a JSON file.
     """
 
-    def __init__(self, data_path: str, load_train_data: bool = True) -> None:
+    def __init__(self, data_path: str, load_train_data: bool) -> None:
         self.data = self._load_json(data_path)
         self.split = "train" if load_train_data else "dev"
 
