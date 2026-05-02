@@ -52,10 +52,10 @@ def _configure_logging() -> None:
 class MainArgs(BaseModel):
     """Validated arguments for the ConvFinQA pipeline."""
 
-    model_name: ModelName
-    prompting_strategy: PromptingStrategy
-    sample_size: int = Field(gt=0)
-    use_train_data: bool
+    model_name: ModelName = ModelName.GPT_4_1
+    prompting_strategy: PromptingStrategy = PromptingStrategy.CHAIN_OF_THOUGHT
+    sample_size: int = Field(default=10, gt=0)
+    use_train_data: bool = False
     seed: int | None = None
 
 

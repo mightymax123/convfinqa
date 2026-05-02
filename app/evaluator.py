@@ -17,9 +17,9 @@ class ConversationsEvaluator:
     def __init__(
         self,
         all_convs: list[ConvQA],
-        model_name: ModelName = ModelName.GPT_4_1,
-        prompting_strategy: PromptingStrategy = PromptingStrategy.CHAIN_OF_THOUGHT,
-        sample_size: int = 100,
+        model_name: ModelName,
+        prompting_strategy: PromptingStrategy,
+        sample_size: int,
     ) -> None:
         """Initialise the evaluator with conversations and run configuration.
 

@@ -18,11 +18,11 @@ from app.settings import get_settings
 class GetAllLlmResponses:
     def __init__(
         self,
-        model_name: ModelName = ModelName.GPT_4_1,
-        prompting_strategy: PromptingStrategy = PromptingStrategy.CHAIN_OF_THOUGHT,
-        load_train_data: bool = False,
-        sample_size: int = 100,
-        seed: int | None = None,
+        model_name: ModelName,
+        prompting_strategy: PromptingStrategy,
+        load_train_data: bool,
+        sample_size: int,
+        seed: int | None,
     ):
         """
         Initialise with model, prompting strategy, and sampling options.

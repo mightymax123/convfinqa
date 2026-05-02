@@ -2,8 +2,10 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
+from app.agent import ModelName
 from app.data_parser import ConvQA, FinancialDoc
 from app.evaluator import ConversationsEvaluator
+from app.prompting import PromptingStrategy
 
 _SAMPLE_DOC = FinancialDoc(
     pre_text="Sample pre text.",
@@ -76,7 +78,12 @@ def test_evaluate_all_conversations_100_percent(
     When: evaluate_all_conversations is called
     Then: It should return 100.0 accuracy
     """
-    evaluator = ConversationsEvaluator(all_convs=perfect_match_conv)
+    evaluator = ConversationsEvaluator(
+        all_convs=perfect_match_conv,
+        model_name=ModelName.GPT_4_1,
+        prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
+        sample_size=1,
+    )
     result: float = evaluator.evaluate_all_conversations()
     assert result == 100.0
 
@@ -91,7 +98,12 @@ def test_evaluate_all_conversations_50_percent(
     When: evaluate_all_conversations is called
     Then: It should return 50.0 accuracy
     """
-    evaluator = ConversationsEvaluator(all_convs=partial_match_conv)
+    evaluator = ConversationsEvaluator(
+        all_convs=partial_match_conv,
+        model_name=ModelName.GPT_4_1,
+        prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
+        sample_size=1,
+    )
     result: float = evaluator.evaluate_all_conversations()
     assert result == 50.0
 
@@ -106,6 +118,11 @@ def test_evaluate_all_conversations_0_percent(
     When: evaluate_all_conversations is called
     Then: It should return 0.0 accuracy
     """
-    evaluator = ConversationsEvaluator(all_convs=no_match_conv)
+    evaluator = ConversationsEvaluator(
+        all_convs=no_match_conv,
+        model_name=ModelName.GPT_4_1,
+        prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
+        sample_size=1,
+    )
     result: float = evaluator.evaluate_all_conversations()
     assert result == 0.0

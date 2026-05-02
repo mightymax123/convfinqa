@@ -7,8 +7,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic_ai.models.test import TestModel
 
+from app.agent import ModelName
 from app.data_parser import ConvQA, FinancialDoc
 from app.generate_responses import GetAllLlmResponses
+from app.prompting import PromptingStrategy
 
 _SAMPLE_DOC = FinancialDoc(
     pre_text="Some introductory text.",
@@ -43,7 +45,13 @@ def generator() -> GetAllLlmResponses:
         mock_parser = MagicMock()
         mock_parser.parse_all_conversations.return_value = []
         mock_parser_cls.return_value = mock_parser
-        instance = GetAllLlmResponses(sample_size=0, seed=None)
+        instance = GetAllLlmResponses(
+            model_name=ModelName.GPT_4_1,
+            prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
+            load_train_data=False,
+            sample_size=0,
+            seed=None,
+        )
     return instance
 
 
