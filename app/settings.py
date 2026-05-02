@@ -18,6 +18,7 @@ class Settings(BaseSettings):
         random_seed: Random seed for reproducibility.
         max_retries: Number of retries for both pydantic-ai tool-call / output-validation
             attempts and OpenAI SDK HTTP retries (e.g. on 429 / 5xx responses).
+        log_file: Path to write log output in addition to stderr.
     """
 
     openai_api_key: str = Field(min_length=1)
@@ -27,6 +28,8 @@ class Settings(BaseSettings):
     random_seed: int = Field(default=42, ge=0)
 
     max_retries: int = Field(default=10, ge=0, le=10)
+
+    log_file: str = "/code/logs/convfinqa.log"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 

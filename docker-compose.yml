@@ -14,5 +14,6 @@ services:
       - ./tests:/code/tests
       - ./data:/data
       - ./outputs:/code/outputs
+      - ./logs:/code/logs
       - ./pyproject.toml:/code/pyproject.toml
       - ./uv.lock:/code/uv.lock

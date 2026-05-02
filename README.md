@@ -24,7 +24,7 @@ This pipeline evaluates multiple OpenAI models (`gpt-4.1`, `gpt-4o`, `gpt-4o-min
 
 ## Setup
 
-1. Initialise the project — copies `sample.env` to `.env` and creates `data/` and `outputs/` directories:
+1. Initialise the project — copies `sample.env` to `.env` and creates `data/`, `outputs/`, and `logs/` directories:
    ```bash
    make init
    ```
@@ -86,6 +86,7 @@ Results are written to `outputs/<model>_<strategy>/`:
 | `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                                                                  |
 | `RANDOM_SEED`    | `42`                           | Seed for reproducible sampling                                                                        |
 | `MAX_RETRIES`    | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)         |
+| `LOG_FILE`       | `/code/logs/convfinqa.log`     | Path inside the container to write logs (volume-mapped to `logs/convfinqa.log` on the host)           |
 | `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                             |
 | `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                           |
 
