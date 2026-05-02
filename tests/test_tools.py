@@ -94,14 +94,13 @@ class TestDivide:
         """
         assert divide(10.0, 4.0) == pytest.approx(2.5)
 
-    def test_divide_by_zero_raises_value_error(self) -> None:
+    def test_divide_by_zero_returns_none(self) -> None:
         """
         GIVEN a non-zero numerator and a zero denominator,
         WHEN divide is called,
-        THEN a ValueError is raised.
+        THEN None is returned.
         """
-        with pytest.raises(ValueError, match="Cannot divide by zero"):
-            divide(10.0, 0.0)
+        assert divide(10.0, 0.0) is None
 
     def test_divide_negative_by_positive(self) -> None:
         """
@@ -137,14 +136,13 @@ class TestPercentageChange:
         """
         assert percentage_change(50.0, 50.0) == pytest.approx(0.0)
 
-    def test_percentage_change_zero_base_raises(self) -> None:
+    def test_percentage_change_zero_base_returns_none(self) -> None:
         """
         GIVEN a zero base_value,
         WHEN percentage_change is called,
-        THEN ValueError is raised.
+        THEN None is returned.
         """
-        with pytest.raises(ValueError, match="zero"):
-            percentage_change(0.0, 100.0)
+        assert percentage_change(0.0, 100.0) is None
 
 
 class TestGreater:
@@ -197,3 +195,19 @@ class TestExp:
         THEN the correct root is returned.
         """
         assert exp(9.0, 0.5) == pytest.approx(3.0)
+
+    def test_exp_negative_base_fractional_exponent_returns_none(self) -> None:
+        """
+        GIVEN a negative base and a fractional exponent,
+        WHEN exp is called,
+        THEN None is returned as the result is not real-valued.
+        """
+        assert exp(-4.0, 0.5) is None
+
+    def test_exp_zero_base_negative_exponent_returns_none(self) -> None:
+        """
+        GIVEN a base of zero and a negative exponent,
+        WHEN exp is called,
+        THEN None is returned as the result is undefined.
+        """
+        assert exp(0.0, -1.0) is None

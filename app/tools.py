@@ -2,7 +2,9 @@
 Arithmetic tools for the ConvFinQA financial question-answering agent.
 
 Each tool is a plain function registered on the Agent. All tools log their
-inputs and result at DEBUG level.
+inputs and result at DEBUG level. Invalid inputs that would normally raise an
+exception are caught, logged at WARNING level, and return None so the agent
+can handle them gracefully without crashing the evaluation.
 """
 
 from loguru import logger
@@ -53,7 +55,7 @@ def multiply(multiplicand: float, multiplier: float) -> float:
     return result
 
 
-def divide(numerator: float, denominator: float) -> float:
+def divide(numerator: float, denominator: float) -> float | None:
     """Divide numerator by denominator (numerator / denominator).
 
     Args:
@@ -61,19 +63,18 @@ def divide(numerator: float, denominator: float) -> float:
         denominator: The value to divide by.
 
     Returns:
-        The quotient of numerator divided by denominator.
-
-    Raises:
-        ValueError: If denominator is zero.
+        The quotient of numerator divided by denominator, or None if
+        denominator is zero.
     """
     if denominator == 0:
-        raise ValueError("Cannot divide by zero.")
+        logger.warning(f"divide({numerator}, {denominator}): denominator is zero; returning None.")
+        return None
     result = numerator / denominator
     logger.debug(f"divide({numerator}, {denominator}) = {result}")
     return result
 
 
-def percentage_change(base_value: float, new_value: float) -> float:
+def percentage_change(base_value: float, new_value: float) -> float | None:
     """Calculate the percentage change from base_value to new_value.
 
     Returns a positive number for an increase and a negative number for a
@@ -84,13 +85,14 @@ def percentage_change(base_value: float, new_value: float) -> float:
         new_value: The new value to compare against the base.
 
     Returns:
-        The percentage change as a float (e.g. 50.0 for a 50% increase).
-
-    Raises:
-        ValueError: If base_value is zero.
+        The percentage change as a float (e.g. 50.0 for a 50% increase),
+        or None if base_value is zero.
     """
     if base_value == 0:
-        raise ValueError("Cannot calculate percentage change with a base_value of zero.")
+        logger.warning(
+            f"percentage_change(base_value={base_value}, new_value={new_value}): base_value is zero; returning None."
+        )
+        return None
     result = ((new_value - base_value) / base_value) * 100
     logger.debug(f"percentage_change(base_value={base_value}, new_value={new_value}) = {result}")
     return result
@@ -111,19 +113,34 @@ def greater(first_value: float, second_value: float) -> float:
     return result
 
 
-def exp(base: float, exponent: float) -> float:
+def exp(base: float, exponent: float) -> float | None:
     """Raise base to the given exponent (base ** exponent).
 
     Useful for compound growth calculations, e.g. exp(1.05, 3) for 3 years
     of 5% annual growth.
+
+    Negative bases with fractional exponents produce complex numbers in
+    mathematics but are undefined for real-valued arithmetic; this function
+    returns None in that case. A base of zero with a negative exponent is
+    also undefined and returns None.
 
     Args:
         base: The base value.
         exponent: The power to raise the base to.
 
     Returns:
-        base raised to the exponent.
+        base raised to the exponent, or None if the combination is undefined
+        for real-valued arithmetic.
     """
-    result = base**exponent
+    try:
+        result = base**exponent
+    except (ValueError, ZeroDivisionError) as e:
+        logger.warning(
+            f"exp(base={base}, exponent={exponent}): undefined for real-valued arithmetic ({e}); returning None."
+        )
+        return None
+    if isinstance(result, complex):
+        logger.warning(f"exp(base={base}, exponent={exponent}): result is complex ({result}); returning None.")
+        return None
     logger.debug(f"exp({base}, {exponent}) = {result}")
     return result
