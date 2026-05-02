@@ -43,7 +43,7 @@ def generator() -> GetAllLlmResponses:
         mock_parser = MagicMock()
         mock_parser.parse_all_conversations.return_value = []
         mock_parser_cls.return_value = mock_parser
-        instance = GetAllLlmResponses(sample_size=0, use_seed=False)
+        instance = GetAllLlmResponses(sample_size=0, seed=None)
     return instance
 
 

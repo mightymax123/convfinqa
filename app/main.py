@@ -15,7 +15,8 @@ from app.agent import ModelName
 from app.evaluator import ConversationsEvaluator
 from app.generate_responses import GetAllLlmResponses
 from app.prompting import PromptingStrategy
-from app.settings import get_settings
+
+LOG_FILE = "/code/logs/convfinqa.log"
 
 app = typer.Typer(
     name="convfinqa",
@@ -33,7 +34,7 @@ def _configure_logging() -> None:
     line is written to the file at the start of each run so individual runs
     are clearly partitioned when reviewing the log.
     """
-    log_file = get_settings().log_file
+    log_file = LOG_FILE
     logger.add(
         log_file,
         level="DEBUG",
@@ -55,7 +56,7 @@ class MainArgs(BaseModel):
     prompting_strategy: PromptingStrategy
     sample_size: int = Field(gt=0)
     use_train_data: bool
-    use_seed: bool
+    seed: int | None = None
 
 
 def main(args: MainArgs) -> None:
@@ -70,7 +71,7 @@ def main(args: MainArgs) -> None:
         prompting_strategy=args.prompting_strategy,
         sample_size=args.sample_size,
         load_train_data=args.use_train_data,
-        use_seed=args.use_seed,
+        seed=args.seed,
     )
     all_convs = asyncio.run(generator.get_all_responses())
 
@@ -94,11 +95,9 @@ def evaluate(
     ),
     sample_size: int = typer.Option(10, help="Number of samples to evaluate"),
     use_train_data: bool = typer.Option(False, help="Use training data instead of dev set"),
-    use_seed: bool = typer.Option(
-        True,
-        help="Use fixed random seed for reproducibility",
-        is_flag=False,
-    ),
+    seed: int | None = typer.Option(
+        None, help="Random seed for reproducible sampling. Omit for non-deterministic sampling."
+    ),  # noqa: B008
 ) -> None:
     """
     Run the ConvFinQA pipeline with specified parameters.
@@ -106,16 +105,16 @@ def evaluate(
     Args:
         model_name: The LLM model to use.
         prompting_strategy: Prompting strategy to use.
-        sample_size (int): Number of samples to evaluate.
-        use_train_data (bool): Whether to use training data instead of dev set.
-        use_seed (bool): Whether to use a fixed random seed for reproducibility.
+        sample_size: Number of samples to evaluate.
+        use_train_data: Whether to use training data instead of dev set.
+        seed: Random seed for reproducible sampling. If omitted, sampling is non-deterministic.
     """
     args = MainArgs(
         model_name=model_name,
         prompting_strategy=prompting_strategy,
         sample_size=sample_size,
         use_train_data=use_train_data,
-        use_seed=use_seed,
+        seed=seed,
     )
 
     _configure_logging()
