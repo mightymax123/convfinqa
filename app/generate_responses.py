@@ -63,23 +63,27 @@ class GetAllLlmResponses:
     async def _get_conv_response(self, conv: ConvQA) -> None:
         """Get the LLM response for a single conversation and store structured answers.
 
+        If the agent exceeds the request limit, get_response returns None and
+        the conversation is skipped with an empty llm_answers list. All other
+        exceptions bubble up to the caller.
+
         Args:
             conv: The conversation object containing questions and answers.
-
-        Raises:
-            RuntimeError: If the agent fails to produce a response.
         """
-        logger.debug(f"Generating prompt and requesting response for conversation ID: {conv.id}")
+        logger.debug(f"\n--- Conversation: {conv.id} ---")
 
-        try:
-            prompt = self.prompt_gen.generate_prompt(conv)
-            llm_answers: LlmAnswers = await get_response(self.agent, prompt)
-            conv.llm_answers = llm_answers.answers
-        except Exception as e:
-            logger.error(f"Error processing conversation {conv.id}: {e}")
-            raise RuntimeError(f"Error processing conversation {conv.id}: {e}") from e
+        prompt = self.prompt_gen.generate_prompt(conv)
+        llm_answers: LlmAnswers | None = await get_response(self.agent, prompt)
 
-        logger.debug(f"Response for conversation ID {conv.id} received and processed.")
+        if llm_answers is None:
+            logger.warning(
+                f"Skipping conversation {conv.id}: request limit exceeded. "
+                "All answers for this conversation will be empty and scored as incorrect."
+            )
+            return
+
+        conv.llm_answers = llm_answers.answers
+        logger.debug(f"Conversation {conv.id} complete — answers: {llm_answers.answers}")
 
     def _save_conversations_to_json(self) -> None:
         """Save the list of conversations with LLM answers to a JSON file.

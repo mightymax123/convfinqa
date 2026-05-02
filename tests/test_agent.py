@@ -95,4 +95,24 @@ class TestGetResponse:
         with agent.override(model=test_model, tools=[]):
             result = await get_response(agent, "What is the total revenue?")
 
+        assert result is not None
         assert result.answers == ["100"]
+
+    async def test_get_response_returns_none_on_usage_limit_exceeded(self) -> None:
+        """
+        GIVEN an agent run with a request limit of zero,
+        WHEN get_response is called,
+        THEN None is returned rather than raising UsageLimitExceeded.
+        """
+        from unittest.mock import patch
+
+        from pydantic_ai.usage import UsageLimits
+
+        agent = build_agent(model_name=ModelName.GPT_4O, max_retries=1)
+        test_model = TestModel(custom_output_args={"answers": ["42"]})
+
+        with agent.override(model=test_model, tools=[]):
+            with patch("app.agent.UsageLimits", return_value=UsageLimits(request_limit=0)):
+                result = await get_response(agent, "What is revenue?")
+
+        assert result is None

@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 import typer
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from rich import print as rich_print
 from rich.pretty import Pretty
 
@@ -52,11 +52,11 @@ def _configure_logging() -> None:
 class MainArgs(BaseModel):
     """Validated arguments for the ConvFinQA pipeline."""
 
-    model_name: ModelName = ModelName.GPT_4_1
-    prompting_strategy: PromptingStrategy = PromptingStrategy.CHAIN_OF_THOUGHT
-    sample_size: int = Field(default=10, gt=0)
-    use_train_data: bool = False
-    seed: int | None = None
+    model_name: ModelName
+    prompting_strategy: PromptingStrategy
+    sample_size: int
+    use_train_data: bool
+    seed: int | None
 
 
 def main(args: MainArgs) -> None:
@@ -95,9 +95,9 @@ def evaluate(
     ),
     sample_size: int = typer.Option(10, help="Number of samples to evaluate"),
     use_train_data: bool = typer.Option(False, help="Use training data instead of dev set"),
-    seed: int | None = typer.Option(
+    seed: int | None = typer.Option(  # noqa: B008
         None, help="Random seed for reproducible sampling. Omit for non-deterministic sampling."
-    ),  # noqa: B008
+    ),
 ) -> None:
     """
     Run the ConvFinQA pipeline with specified parameters.
