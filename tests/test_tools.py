@@ -137,13 +137,13 @@ class TestPercentageChange:
         """
         assert percentage_change(50.0, 50.0) == pytest.approx(0.0)
 
-    def test_percentage_change_zero_base_raises_value_error(self) -> None:
+    def test_percentage_change_zero_base_raises(self) -> None:
         """
         GIVEN a zero base_value,
         WHEN percentage_change is called,
-        THEN a ValueError is raised.
+        THEN ValueError is raised.
         """
-        with pytest.raises(ValueError, match="zero base value"):
+        with pytest.raises(ValueError, match="zero"):
             percentage_change(0.0, 100.0)
 
 

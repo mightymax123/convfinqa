@@ -36,7 +36,10 @@ class GetAllLlmResponses:
         """
         settings = get_settings()
 
-        self.agent = build_agent(model_name=model_name, max_retries=settings.max_retries)
+        self.agent = build_agent(
+            model_name=model_name,
+            max_retries=settings.max_retries,
+        )
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
         conv_parser = ConvFinQaDataParser(data_path=settings.data_path, load_train_data=load_train_data)
@@ -57,17 +60,24 @@ class GetAllLlmResponses:
         subfolder = f"{model_name.value}_{prompting_strategy.value}"
         self.save_path = os.path.join("/code/outputs", subfolder, "convfinqa_responses.json")
 
-    def _get_conv_response(self, conv: ConvQA) -> None:
+    async def _get_conv_response(self, conv: ConvQA) -> None:
         """Get the LLM response for a single conversation and store structured answers.
 
         Args:
             conv: The conversation object containing questions and answers.
+
+        Raises:
+            RuntimeError: If the agent fails to produce a response.
         """
         logger.debug(f"Generating prompt and requesting response for conversation ID: {conv.id}")
 
-        prompt = self.prompt_gen.generate_prompt(conv)
-        llm_answers: LlmAnswers = get_response(self.agent, prompt)
-        conv.llm_answers = llm_answers.answers
+        try:
+            prompt = self.prompt_gen.generate_prompt(conv)
+            llm_answers: LlmAnswers = await get_response(self.agent, prompt)
+            conv.llm_answers = llm_answers.answers
+        except Exception as e:
+            logger.error(f"Error processing conversation {conv.id}: {e}")
+            raise RuntimeError(f"Error processing conversation {conv.id}: {e}") from e
 
         logger.debug(f"Response for conversation ID {conv.id} received and processed.")
 
@@ -101,8 +111,11 @@ class GetAllLlmResponses:
 
         logger.info(f"Conversations saved successfully to {self.save_path}")
 
-    def get_all_responses(self) -> list[ConvQA]:
-        """Get LLM responses for all conversations in the dataset.
+    async def get_all_responses(self) -> list[ConvQA]:
+        """Get LLM responses for all conversations in the dataset sequentially.
+
+        Each conversation is fully processed before the next begins, avoiding
+        thundering-herd rate-limit issues when calling the OpenAI API.
 
         Returns:
             The list of conversations with llm_answers populated.
@@ -111,11 +124,7 @@ class GetAllLlmResponses:
             RuntimeError: If any individual conversation fails to process.
         """
         for conv in tqdm(self.all_convs, desc="Processing conversations", unit="conv"):
-            try:
-                self._get_conv_response(conv)
-            except Exception as e:
-                logger.error(f"Error processing conversation {conv.id}: {e}")
-                raise RuntimeError(f"Error processing conversation {conv.id}: {e}") from e
+            await self._get_conv_response(conv)
 
         self._save_conversations_to_json()
 

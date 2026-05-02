@@ -4,6 +4,7 @@ Tests for the pydantic-ai agent setup in app/agent.py.
 
 # Prevent accidental real model requests in this test module.
 from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.models.test import TestModel
 
 from app.agent import LlmAnswers, ModelName, build_agent, get_response
@@ -55,9 +56,19 @@ class TestBuildAgent:
 
         assert registered == _EXPECTED_TOOLS
 
+    def test_build_agent_configures_model(self) -> None:
+        """
+        GIVEN a valid model name,
+        WHEN build_agent is called,
+        THEN the agent's model is an OpenAIModel with the correct model name.
+        """
+        agent = build_agent(model_name=ModelName.GPT_4O, max_retries=5)
+        assert isinstance(agent.model, OpenAIModel)
+        assert agent.model.model_name == ModelName.GPT_4O.value
+
 
 class TestGetResponse:
-    def test_get_response_returns_llm_answers(self) -> None:
+    async def test_get_response_returns_llm_answers(self) -> None:
         """
         GIVEN a TestModel configured to return structured answers,
         WHEN get_response is called with a prompt,
@@ -67,12 +78,12 @@ class TestGetResponse:
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
         with agent.override(model=test_model, tools=[]):
-            result = get_response(agent, "What is revenue? {next_question} What is profit?")
+            result = await get_response(agent, "What is revenue? {next_question} What is profit?")
 
         assert isinstance(result, LlmAnswers)
         assert result.answers == ["42", "84"]
 
-    def test_get_response_handles_single_answer(self) -> None:
+    async def test_get_response_handles_single_answer(self) -> None:
         """
         GIVEN a TestModel configured to return a single answer,
         WHEN get_response is called,
@@ -82,6 +93,6 @@ class TestGetResponse:
         test_model = TestModel(custom_output_args={"answers": ["100"]})
 
         with agent.override(model=test_model, tools=[]):
-            result = get_response(agent, "What is the total revenue?")
+            result = await get_response(agent, "What is the total revenue?")
 
         assert result.answers == ["100"]

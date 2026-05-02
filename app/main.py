@@ -2,6 +2,8 @@
 Main typer app for ConvFinQA
 """
 
+import asyncio
+
 import typer
 from pydantic import BaseModel, Field
 from rich import print as rich_print
@@ -44,7 +46,7 @@ def main(args: MainArgs) -> None:
         load_train_data=args.use_train_data,
         use_seed=args.use_seed,
     )
-    all_convs = generator.get_all_responses()
+    all_convs = asyncio.run(generator.get_all_responses())
 
     evaluator = ConversationsEvaluator(
         all_convs=all_convs,

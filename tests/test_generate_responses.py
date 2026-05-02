@@ -2,7 +2,7 @@
 Tests for GetAllLlmResponses in app/generate_responses.py.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic_ai.models.test import TestModel
@@ -48,7 +48,7 @@ def generator() -> GetAllLlmResponses:
 
 
 class TestGetConvResponse:
-    def test_get_conv_response_sets_llm_answers(
+    async def test_get_conv_response_sets_llm_answers(
         self,
         generator: GetAllLlmResponses,
         dummy_convqa: ConvQA,
@@ -61,11 +61,11 @@ class TestGetConvResponse:
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
         with generator.agent.override(model=test_model, tools=[]):
-            generator._get_conv_response(dummy_convqa)
+            await generator._get_conv_response(dummy_convqa)
 
         assert dummy_convqa.llm_answers == ["42", "84"]
 
-    def test_get_conv_response_uses_prompt_generator(
+    async def test_get_conv_response_uses_prompt_generator(
         self,
         generator: GetAllLlmResponses,
         dummy_convqa: ConvQA,
@@ -79,13 +79,13 @@ class TestGetConvResponse:
 
         with patch.object(generator.prompt_gen, "generate_prompt", return_value="Mocked prompt") as mock_prompt:
             with generator.agent.override(model=test_model, tools=[]):
-                generator._get_conv_response(dummy_convqa)
+                await generator._get_conv_response(dummy_convqa)
 
         mock_prompt.assert_called_once_with(dummy_convqa)
 
 
 class TestGetAllResponses:
-    def test_get_all_responses_processes_all_conversations(
+    async def test_get_all_responses_processes_all_conversations(
         self,
         generator: GetAllLlmResponses,
     ) -> None:
@@ -102,12 +102,12 @@ class TestGetAllResponses:
 
         with patch.object(generator, "_save_conversations_to_json"):
             with generator.agent.override(model=test_model, tools=[]):
-                result = generator.get_all_responses()
+                result = await generator.get_all_responses()
 
         assert result[0].llm_answers == ["answer"]
         assert result[1].llm_answers == ["answer"]
 
-    def test_get_all_responses_raises_on_failure(
+    async def test_get_all_responses_raises_on_failure(
         self,
         generator: GetAllLlmResponses,
     ) -> None:
@@ -119,6 +119,6 @@ class TestGetAllResponses:
         conv = ConvQA(id="fail-1", doc=_SAMPLE_DOC, questions=["Q?"], answers=["A"])
         generator.all_convs = [conv]
 
-        with patch.object(generator, "_get_conv_response", side_effect=Exception("boom")):
+        with patch.object(generator, "_get_conv_response", new=AsyncMock(side_effect=RuntimeError("fail-1"))):
             with pytest.raises(RuntimeError, match="fail-1"):
-                generator.get_all_responses()
+                await generator.get_all_responses()

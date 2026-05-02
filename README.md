@@ -80,14 +80,14 @@ Results are written to `outputs/<model>_<strategy>/`:
 
 ## Environment Variables
 
-| Variable         | Default                        | Description                                                 |
-| ---------------- | ------------------------------ | ----------------------------------------------------------- |
-| `OPENAI_API_KEY` | *(required)*                   | Your OpenAI API key                                         |
-| `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                        |
-| `RANDOM_SEED`    | `42`                           | Seed for reproducible sampling                              |
-| `MAX_RETRIES`    | `3`                            | Retry attempts for failed API calls                         |
-| `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host   |
-| `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host |
+| Variable         | Default                        | Description                                                                                           |
+| ---------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY` | *(required)*                   | Your OpenAI API key                                                                                   |
+| `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                                                                  |
+| `RANDOM_SEED`    | `42`                           | Seed for reproducible sampling                                                                        |
+| `MAX_RETRIES`    | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)         |
+| `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                             |
+| `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                           |
 
 <div align="center">
 

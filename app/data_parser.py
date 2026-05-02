@@ -128,8 +128,6 @@ class ConvFinQaDataParser:
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
 
-        logger.debug(f"Fetching Q&A pair at index {idx} from {self.split} split.")
-
         questions = self.data[self.split][idx]["dialogue"]["conv_questions"]
         answers = self.data[self.split][idx]["dialogue"]["conv_answers"]
 
@@ -177,8 +175,6 @@ class ConvFinQaDataParser:
         """
         if idx < 0:
             raise ValueError("Index must be a non-negative integer.")
-
-        logger.debug(f"Parsing conversation at index {idx} from {self.split} split.")
 
         id = self._parse_document_id(idx)
         doc = self._parse_document(idx)
