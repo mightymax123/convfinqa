@@ -90,7 +90,7 @@ def percentage_change(base_value: float, new_value: float) -> float:
         ValueError: If base_value is zero.
     """
     if base_value == 0:
-        raise ValueError("Cannot calculate percentage change from a zero base value.")
+        raise ValueError("Cannot calculate percentage change with a base_value of zero.")
     result = ((new_value - base_value) / base_value) * 100
     logger.debug(f"percentage_change(base_value={base_value}, new_value={new_value}) = {result}")
     return result

@@ -4,10 +4,12 @@ Pydantic AI agent setup for the ConvFinQA financial question-answering pipeline.
 
 from enum import Enum
 
+import openai
 from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.usage import UsageLimits
 
 from app.settings import get_settings
 from app.tools import add, divide, exp, greater, multiply, percentage_change, subtract
@@ -41,12 +43,16 @@ class LlmAnswers(BaseModel):
     answers: list[str]
 
 
-def build_agent(model_name: ModelName, max_retries: int) -> Agent[None, LlmAnswers]:
+def build_agent(
+    model_name: ModelName,
+    max_retries: int,
+) -> Agent[None, LlmAnswers]:
     """Construct a pydantic-ai Agent for the given model and retry settings.
 
     Args:
         model_name: The OpenAI model to use.
-        max_retries: Maximum number of retry attempts on transient failures.
+        max_retries: Number of retries for both tool-call / output-validation
+            attempts and OpenAI SDK HTTP retries (e.g. on 429 / 5xx responses).
 
     Returns:
         A configured Agent that returns validated LlmAnswers output.
@@ -54,7 +60,12 @@ def build_agent(model_name: ModelName, max_retries: int) -> Agent[None, LlmAnswe
     settings = get_settings()
     model = OpenAIModel(
         model_name.value,
-        provider=OpenAIProvider(api_key=settings.openai_api_key),
+        provider=OpenAIProvider(
+            openai_client=openai.AsyncOpenAI(
+                api_key=settings.openai_api_key,
+                max_retries=max_retries,
+            )
+        ),
     )
     return Agent(
         model,
@@ -65,7 +76,7 @@ def build_agent(model_name: ModelName, max_retries: int) -> Agent[None, LlmAnswe
     )
 
 
-def get_response(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers:
+async def get_response(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers:
     """Run the agent with a prompt and return structured answers.
 
     Args:
@@ -75,5 +86,5 @@ def get_response(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers:
     Returns:
         Validated LlmAnswers containing the list of answers.
     """
-    result = agent.run_sync(prompt)
+    result = await agent.run(prompt, usage_limits=UsageLimits(request_limit=25))
     return result.output
