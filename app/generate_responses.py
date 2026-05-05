@@ -14,6 +14,8 @@ from app.data_parser import ConvFinQaDataParser, ConvQA
 from app.prompting import PromptGenerator, PromptingStrategy
 from app.settings import get_settings
 
+DATA_PATH = "/data/convfinqa_dataset.json"
+
 
 class GetAllLlmResponses:
     def __init__(
@@ -43,7 +45,7 @@ class GetAllLlmResponses:
         )
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
-        conv_parser = ConvFinQaDataParser(data_path=settings.data_path, load_train_data=load_train_data)
+        conv_parser = ConvFinQaDataParser(data_path=DATA_PATH, load_train_data=load_train_data)
         self.all_convs = conv_parser.parse_all_conversations()
 
         logger.info(

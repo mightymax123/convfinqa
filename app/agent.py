@@ -30,8 +30,8 @@ class ModelName(str, Enum):
     GPT_5_5 = "openai/gpt-5.5"
     CLAUDE_SONNET_4_5 = "anthropic/claude-sonnet-4.5"
     CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
-    GEMINI_3_1_PRO = "google/gemini-3.1-pro"
-    GEMINI_3_1_FLASH_LITE = "google/gemini-3.1-flash-lite"
+    GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"
+    GEMINI_3_1_FLASH_LITE = "google/gemini-3.1-flash-lite-preview"
 
 
 _SYSTEM_PROMPT = (

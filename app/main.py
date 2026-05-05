@@ -89,9 +89,9 @@ def main(args: MainArgs) -> None:
 
 @app.command()
 def evaluate(
-    model_name: ModelName = typer.Option(ModelName.GPT_4_1, help="Name of the LLM model to use"),  # noqa: B008
+    model_name: ModelName = typer.Option(ModelName.GEMINI_3_1_FLASH_LITE, help="Name of the LLM model to use"),  # noqa: B008
     prompting_strategy: PromptingStrategy = typer.Option(  # noqa: B008
-        PromptingStrategy.CHAIN_OF_THOUGHT,
+        PromptingStrategy.BASIC,
         help="Prompting strategy to use",
     ),
     sample_size: int = typer.Option(10, help="Number of samples to evaluate"),
