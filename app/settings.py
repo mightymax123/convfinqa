@@ -13,13 +13,13 @@ class Settings(BaseSettings):
     App configuration loaded from environment variables.
 
     Attributes:
-        openai_api_key: API key for OpenAI.
+        openrouter_api_key: API key for OpenRouter — grants access to all supported providers.
         data_path: Path to the ConvFinQa dataset.
         max_retries: Number of retries for both pydantic-ai tool-call / output-validation
             attempts and OpenAI SDK HTTP retries (e.g. on 429 / 5xx responses).
     """
 
-    openai_api_key: str = Field(min_length=1)
+    openrouter_api_key: str = Field(min_length=1)
 
     data_path: str = "/data/convfinqa_dataset.json"
 
