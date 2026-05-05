@@ -2,6 +2,7 @@
 Tests for GetAllLlmResponses in app/generate_responses.py.
 """
 
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,12 +12,31 @@ from app.agent import ModelName
 from app.data_parser import ConvQA, FinancialDoc
 from app.generate_responses import GetAllLlmResponses
 from app.prompting import PromptingStrategy
+from app.settings import Settings
 
 _SAMPLE_DOC = FinancialDoc(
     pre_text="Some introductory text.",
     post_text="Some trailing text.",
     table={"2023": {"revenue": 100.0}},
 )
+
+
+@pytest.fixture(autouse=True)
+def patch_settings(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
+    """
+    GIVEN tests that instantiate GetAllLlmResponses (which calls get_settings()),
+    WHEN any test in this module runs,
+    THEN get_settings() is patched in app.generate_responses and OPENROUTER_API_KEY is set
+         in the environment so no real environment variable or .env file is required.
+    """
+    from app.settings import get_settings
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()
+    dummy = Settings(openrouter_api_key="test-key")
+    with patch("app.generate_responses.get_settings", return_value=dummy):
+        yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture

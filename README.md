@@ -12,14 +12,14 @@
 
 A reproducible evaluation framework for benchmarking Large Language Models on the **ConvFinQA** dataset - a conversational financial question-answering benchmark requiring multi-step reasoning across tabular data.
 
-This pipeline evaluates multiple OpenAI models (`gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini`) using three distinct prompting strategies (`basic`, `chain-of-thought`, `few-shot`) with structured output generation and comprehensive accuracy metrics.
+This pipeline evaluates models from OpenAI, Anthropic, and Google via **OpenRouter** using three distinct prompting strategies (`basic`, `chain-of-thought`, `few-shot`) with structured output generation and comprehensive accuracy metrics.
 
 ### Key Features
 
-- **Multi-Model Support**: Evaluate OpenAI's latest models with consistent methodology
-- **Prompt Engineering**: Compare basic, chain-of-thought, and few-shot learning approaches  
-- **Reproducible Results**: Seeded sampling and containerized environment
-- **Production Ready**: Type-safe configuration, retry logic, structured logging
+- **Multi-Provider Support**: Evaluate models from OpenAI, Anthropic, and Google via OpenRouter
+- **Prompt Engineering**: Compare basic, chain-of-thought, and few-shot learning approaches
+- **Reproducible Results**: Seeded sampling and containerised environment
+- **Production Ready**: Type-safe configuration, exponential-backoff retry logic, structured logging
 - **Comprehensive Testing**: Unit tests with pytest, linting with ruff, type checking with pyrefly
 
 ## Setup
@@ -28,7 +28,7 @@ This pipeline evaluates multiple OpenAI models (`gpt-4.1`, `gpt-4o`, `gpt-4o-min
    ```bash
    make init
    ```
-2. Open `.env` and set `OPENAI_API_KEY` to your actual OpenAI API key.
+2. Open `.env` and set `OPENROUTER_API_KEY` to your actual OpenRouter API key.
 3. Place the ConvFinQA dataset at `data/convfinqa_dataset.json`.
 4. Build and start the container:
    ```bash
@@ -66,13 +66,29 @@ Example — `gpt-4o-mini` with basic prompting, 5 samples:
 docker compose exec app convfinqa --model-name gpt-4o-mini --prompting-strategy basic --sample-size 5
 ```
 
-| Argument               | Type   | Default            | Acceptable Values                             | Description                           |
-| ---------------------- | ------ | ------------------ | --------------------------------------------- | ------------------------------------- |
-| `--model-name`         | string | `gpt-4.1`          | `gpt-4.1`, `gpt-4o`, `gpt-4o-mini`, `o4-mini` | Model to evaluate                     |
-| `--prompting-strategy` | string | `chain_of_thought` | `basic`, `chain_of_thought`, `few_shot`       | Prompting strategy                    |
-| `--sample-size`        | int    | `10`               | any positive integer                          | Number of samples                     |
-| `--use-train-data`     | bool   | `False`            | `True`, `False`                               | Use training set instead of test set  |
-| `--use-seed`           | bool   | `True`             | `True`, `False`                               | Fixed random seed for reproducibility |
+| Argument               | Type   | Default            | Acceptable Values                       | Description                           |
+| ---------------------- | ------ | ------------------ | --------------------------------------- | ------------------------------------- |
+| `--model-name`         | string | `openai/gpt-4.1`   | See supported models table below        | Model to evaluate                     |
+| `--prompting-strategy` | string | `chain_of_thought` | `basic`, `chain_of_thought`, `few_shot` | Prompting strategy                    |
+| `--sample-size`        | int    | `10`               | any positive integer                    | Number of samples                     |
+| `--use-train-data`     | bool   | `False`            | `True`, `False`                         | Use training set instead of test set  |
+| `--use-seed`           | bool   | `True`             | `True`, `False`                         | Fixed random seed for reproducibility |
+
+### Supported Models
+
+| Model | Provider |
+| ----------------------------------------- | --------- |
+| `openai/gpt-4.1`                          | OpenAI    |
+| `openai/gpt-4o`                           | OpenAI    |
+| `openai/gpt-4o-mini`                      | OpenAI    |
+| `openai/o4-mini`                          | OpenAI    |
+| `openai/gpt-5.4`                          | OpenAI    |
+| `openai/gpt-5.4-mini`                     | OpenAI    |
+| `openai/gpt-5.5`                          | OpenAI    |
+| `anthropic/claude-sonnet-4.5`             | Anthropic |
+| `anthropic/claude-sonnet-4.6`             | Anthropic |
+| `google/gemini-3.1-pro`                   | Google    |
+| `google/gemini-3.1-flash-lite`            | Google    |
 
 Results are written to `outputs/<model>_<strategy>/`:
 - `convfinqa_responses.json` — per-conversation details
@@ -80,13 +96,13 @@ Results are written to `outputs/<model>_<strategy>/`:
 
 ## Environment Variables
 
-| Variable         | Default                        | Description                                                                                           |
-| ---------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY` | *(required)*                   | Your OpenAI API key                                                                                   |
-| `DATA_PATH`      | `/data/convfinqa_dataset.json` | Path to dataset inside the container                                                                  |
-| `MAX_RETRIES`    | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)         |
-| `UID`            | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                             |
-| `GID`            | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                           |
+| Variable             | Default                        | Description                                                                                          |
+| -------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY` | *(required)*                   | Your OpenRouter API key — grants access to all supported providers (OpenAI, Anthropic, Google, etc.) |
+| `DATA_PATH`          | `/data/convfinqa_dataset.json` | Path to dataset inside the container                                                                 |
+| `MAX_RETRIES`        | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)        |
+| `UID`                | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                            |
+| `GID`                | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                          |
 
 <div align="center">
 
@@ -184,19 +200,21 @@ JSON Results  Summary Reports
 
 ### Evaluation Methodology
 
-- **Accuracy Metric**: Exact string matching between predicted and ground truth answers
+- **Accuracy Metric**: Two-stage matching — exact string first, then numeric-tolerant fallback (unicode minus normalisation, `%` vs decimal alignment, 1% relative tolerance)
 - **Reproducible Sampling**: Configurable sample sizes with optional seeding
 - **Structured Outputs**: JSON format with conversation metadata and evaluation results
+
+### Sequential Processing
+
+Conversations are processed one at a time despite the pipeline being `async`. Each conversation is inherently sequential — the model must wait for each tool call result before deciding the next step, so there is no parallelism to exploit within a conversation. Across conversations, `asyncio.gather` with a semaphore could run multiple concurrently, but this is not implemented because OpenRouter's rate limits are saturated even with a single conversation in-flight. Adding concurrency would increase 429 errors without improving throughput. This should be revisited if the rate limit ceiling is raised.
 
 ## Future Work
 
 The following enhancements would further improve the codebase:
 
-- **Multi-Provider Support**: Evaluation of models from Anthropic (Claude) and Google (Gemini)
 - **Open Source Models**: Integration with Llama and Mistral via Ollama or HuggingFace
-- **Enhanced Evaluation**: Tolerance-based matching, embedding similarity, numeric precision handling
-- **Performance Optimization**: Async/await support for concurrent API calls
-- **Advanced Prompting**: Template experimentation and prompt optimization
+- **Performance Optimisation**: Concurrent conversation processing via `asyncio.gather` with a semaphore — currently blocked by OpenRouter rate limits, which are saturated even with sequential processing. Concurrency would only help once throughput limits are no longer the bottleneck.
+- **Advanced Prompting**: Template experimentation and prompt optimisation
 
 ## License
 

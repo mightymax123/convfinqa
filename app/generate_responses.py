@@ -36,6 +36,7 @@ class GetAllLlmResponses:
         """
         settings = get_settings()
 
+        self.max_retries = settings.max_retries
         self.agent = build_agent(
             model_name=model_name,
             max_retries=settings.max_retries,
@@ -57,7 +58,7 @@ class GetAllLlmResponses:
                 random.seed(seed)
             self.all_convs = random.sample(self.all_convs, sample_size)
 
-        subfolder = f"{model_name.value}_{prompting_strategy.value}"
+        subfolder = f"{model_name.value.split('/')[-1]}_{prompting_strategy.value}"
         self.save_path = os.path.join("/code/outputs", subfolder, "convfinqa_responses.json")
 
     async def _get_conv_response(self, conv: ConvQA) -> None:
@@ -73,7 +74,7 @@ class GetAllLlmResponses:
         logger.debug(f"\n--- Conversation: {conv.id} ---")
 
         prompt = self.prompt_gen.generate_prompt(conv)
-        llm_answers: LlmAnswers | None = await get_response(self.agent, prompt)
+        llm_answers: LlmAnswers | None = await get_response(self.agent, prompt, max_retries=self.max_retries)
 
         if llm_answers is None:
             logger.warning(

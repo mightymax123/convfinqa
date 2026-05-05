@@ -24,6 +24,9 @@ dist/
 # Logs
 logs/
 
+# Model outputs
+outputs/
+
 
 /app/pyproject.toml
 /app/README.md

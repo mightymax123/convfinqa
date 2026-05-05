@@ -4,6 +4,7 @@ Main typer app for ConvFinQA
 
 import asyncio
 from datetime import UTC, datetime
+from typing import Optional
 
 import typer
 from loguru import logger
@@ -95,7 +96,7 @@ def evaluate(
     ),
     sample_size: int = typer.Option(10, help="Number of samples to evaluate"),
     use_train_data: bool = typer.Option(False, help="Use training data instead of dev set"),
-    seed: int | None = typer.Option(  # noqa: B008
+    seed: Optional[int] = typer.Option(  # noqa: B008, UP007
         None, help="Random seed for reproducible sampling. Omit for non-deterministic sampling."
     ),
 ) -> None:
