@@ -71,29 +71,29 @@ Example — `gemini-3.1-flash-lite-preview` with basic prompting, 5 samples:
 docker compose exec app convfinqa --model-name google/gemini-3.1-flash-lite-preview --prompting-strategy basic --sample-size 5
 ```
 
-| Argument               | Type   | Default            | Acceptable Values                       | Description                           |
-| ---------------------- | ------ | ------------------ | --------------------------------------- | ------------------------------------- |
-| `--model-name`         | string | `google/gemini-3.1-flash-lite-preview` | See supported models table below        | Model to evaluate                     |
-| `--prompting-strategy` | string | `basic`            | `basic`, `chain_of_thought`, `few_shot` | Prompting strategy                    |
-| `--sample-size`        | int    | `10`               | any positive integer                    | Number of samples                     |
-| `--use-train-data`     | bool   | `False`            | `True`, `False`                         | Use training set instead of test set  |
-| `--seed`               | int    | `None`             | any integer                             | Random seed for reproducible sampling (omit for non-deterministic) |
+| Argument               | Type   | Default                                | Acceptable Values                       | Description                                                        |
+| ---------------------- | ------ | -------------------------------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| `--model-name`         | string | `google/gemini-3.1-flash-lite-preview` | See supported models table below        | Model to evaluate                                                  |
+| `--prompting-strategy` | string | `basic`                                | `basic`, `chain_of_thought`, `few_shot` | Prompting strategy                                                 |
+| `--sample-size`        | int    | `10`                                   | any positive integer                    | Number of samples                                                  |
+| `--use-train-data`     | bool   | `False`                                | `True`, `False`                         | Use training set instead of test set                               |
+| `--seed`               | int    | `None`                                 | any integer                             | Random seed for reproducible sampling (omit for non-deterministic) |
 
 ### Supported Models
 
-| Model | Provider |
-| ----------------------------------------- | --------- |
-| `openai/gpt-4.1`                          | OpenAI    |
-| `openai/gpt-4o`                           | OpenAI    |
-| `openai/gpt-4o-mini`                      | OpenAI    |
-| `openai/o4-mini`                          | OpenAI    |
-| `openai/gpt-5.4`                          | OpenAI    |
-| `openai/gpt-5.4-mini`                     | OpenAI    |
-| `openai/gpt-5.5`                          | OpenAI    |
-| `anthropic/claude-sonnet-4.5`             | Anthropic |
-| `anthropic/claude-sonnet-4.6`             | Anthropic |
-| `google/gemini-3.1-pro-preview`               | Google    |
-| `google/gemini-3.1-flash-lite-preview`        | Google    |
+| Model                                  | Provider  |
+| -------------------------------------- | --------- |
+| `openai/gpt-4.1`                       | OpenAI    |
+| `openai/gpt-4o`                        | OpenAI    |
+| `openai/gpt-4o-mini`                   | OpenAI    |
+| `openai/o4-mini`                       | OpenAI    |
+| `openai/gpt-5.4`                       | OpenAI    |
+| `openai/gpt-5.4-mini`                  | OpenAI    |
+| `openai/gpt-5.5`                       | OpenAI    |
+| `anthropic/claude-sonnet-4.5`          | Anthropic |
+| `anthropic/claude-sonnet-4.6`          | Anthropic |
+| `google/gemini-3.1-pro-preview`        | Google    |
+| `google/gemini-3.1-flash-lite-preview` | Google    |
 
 Results are written to `outputs/<model>_<strategy>/`:
 - `convfinqa_responses.json` — per-conversation details
@@ -101,12 +101,12 @@ Results are written to `outputs/<model>_<strategy>/`:
 
 ## Environment Variables
 
-| Variable             | Default                        | Description                                                                                          |
-| -------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `OPENROUTER_API_KEY` | *(required)*                   | Your OpenRouter API key — grants access to all supported providers (OpenAI, Anthropic, Google, etc.) |
-| `MAX_RETRIES`        | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)        |
-| `UID`                | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                            |
-| `GID`                | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                          |
+| Variable             | Default                | Description                                                                                          |
+| -------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY` | *(required)*           | Your OpenRouter API key — grants access to all supported providers (OpenAI, Anthropic, Google, etc.) |
+| `MAX_RETRIES`        | `10`                   | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)        |
+| `UID`                | *(set by `make init`)* | Host user ID — aligns container's non-root user with host                                            |
+| `GID`                | *(set by `make init`)* | Host group ID — aligns container's non-root group with host                                          |
 
 ## Results
 
