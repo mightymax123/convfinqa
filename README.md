@@ -6,11 +6,10 @@
 [![Type checked: pyrefly](https://img.shields.io/badge/type%20checked-pyrefly-blue.svg)](https://github.com/facebook/pyrefly)
 [![Testing: pytest](https://img.shields.io/badge/testing-pytest-green.svg)](https://github.com/pytest-dev/pytest)
 [![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-blue.svg)](https://github.com/features/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
-A reproducible evaluation framework for benchmarking Large Language Models on the **ConvFinQA** dataset - a conversational financial question-answering benchmark requiring multi-step reasoning across tabular data.
+A reproducible evaluation framework for benchmarking Large Language Models on the **ConvFinQA** dataset - a conversational financial question-answering benchmark requiring multi-step reasoning across tabular data, introduced in [Chen et al. (2022)](https://arxiv.org/abs/2210.03849).
 
 This pipeline evaluates models from OpenAI, Anthropic, and Google via **OpenRouter** using three distinct prompting strategies (`basic`, `chain-of-thought`, `few-shot`) with structured output generation and comprehensive accuracy metrics.
 
@@ -22,13 +21,19 @@ This pipeline evaluates models from OpenAI, Anthropic, and Google via **OpenRout
 - **Production Ready**: Type-safe configuration, exponential-backoff retry logic, structured logging
 - **Comprehensive Testing**: Unit tests with pytest, linting with ruff, type checking with pyrefly
 
+## Requirements
+
+- [Docker](https://docs.docker.com/get-docker/) (v20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0+)
+- An [OpenRouter API key](https://openrouter.ai/keys) — used to access models from OpenAI, Anthropic, and Google via a single API
+
 ## Setup
 
 1. Initialise the project — copies `sample.env` to `.env` and creates `data/`, `outputs/`, and `logs/` directories:
    ```bash
    make init
    ```
-2. Open `.env` and set `OPENROUTER_API_KEY` to your actual OpenRouter API key.
+2. Open `.env` and set `OPENROUTER_API_KEY` to your OpenRouter API key.
 3. Place the ConvFinQA dataset at `data/convfinqa_dataset.json`.
 4. Build and start the container:
    ```bash
@@ -63,7 +68,7 @@ docker compose exec app convfinqa --model-name <model> --prompting-strategy <str
 Example — `gpt-4o-mini` with basic prompting, 5 samples:
 
 ```bash
-docker compose exec app convfinqa --model-name gpt-4o-mini --prompting-strategy basic --sample-size 5
+docker compose exec app convfinqa --model-name openai/gpt-4o-mini --prompting-strategy basic --sample-size 5
 ```
 
 | Argument               | Type   | Default            | Acceptable Values                       | Description                           |
@@ -72,7 +77,7 @@ docker compose exec app convfinqa --model-name gpt-4o-mini --prompting-strategy 
 | `--prompting-strategy` | string | `chain_of_thought` | `basic`, `chain_of_thought`, `few_shot` | Prompting strategy                    |
 | `--sample-size`        | int    | `10`               | any positive integer                    | Number of samples                     |
 | `--use-train-data`     | bool   | `False`            | `True`, `False`                         | Use training set instead of test set  |
-| `--use-seed`           | bool   | `True`             | `True`, `False`                         | Fixed random seed for reproducibility |
+| `--seed`               | int    | `None`             | any integer                             | Random seed for reproducible sampling (omit for non-deterministic) |
 
 ### Supported Models
 
@@ -103,6 +108,8 @@ Results are written to `outputs/<model>_<strategy>/`:
 | `MAX_RETRIES`        | `10`                           | Retries for both pydantic-ai tool/validation attempts and OpenAI SDK HTTP retries (429 / 5xx)        |
 | `UID`                | *(set by `make init`)*         | Host user ID — aligns container's non-root user with host                                            |
 | `GID`                | *(set by `make init`)*         | Host group ID — aligns container's non-root group with host                                          |
+
+## Results
 
 <div align="center">
 
@@ -146,7 +153,7 @@ flowchart TD
     C -->|Basic| D1[Basic Prompt Builder]
     C -->|Chain-of-Thought| D2[CoT Prompt Builder] 
     C -->|Few-Shot| D3[Few-Shot Prompt Builder]
-    D1 --> E[OpenAI API Client]
+    D1 -->     E[OpenRouter API Client]
     D2 --> E
     D3 --> E
     E -->|Retry Logic| F[LLM Response]
@@ -200,7 +207,7 @@ JSON Results  Summary Reports
 
 ### Evaluation Methodology
 
-- **Accuracy Metric**: Two-stage matching — exact string first, then numeric-tolerant fallback (unicode minus normalisation, `%` vs decimal alignment, 1% relative tolerance)
+- **Accuracy Metric**: Exact string matching after whitespace trimming
 - **Reproducible Sampling**: Configurable sample sizes with optional seeding
 - **Structured Outputs**: JSON format with conversation metadata and evaluation results
 
@@ -216,13 +223,9 @@ The following enhancements would further improve the codebase:
 - **Performance Optimisation**: Concurrent conversation processing via `asyncio.gather` with a semaphore — currently blocked by OpenRouter rate limits, which are saturated even with sequential processing. Concurrency would only help once throughput limits are no longer the bottleneck.
 - **Advanced Prompting**: Template experimentation and prompt optimisation
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Contributing
 
-1. Fork the repository
+1. Clone the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes and ensure tests pass (`all-checks`)
 4. Commit your changes (`git commit -m 'Add amazing feature'`)
