@@ -76,8 +76,6 @@ The LLM-as-judge evaluator handles the most common failure mode — formatting m
 
 **Wrong computation path**: The model calls the correct tools but in the wrong order, or uses an intermediate result incorrectly in a subsequent question. The conversational nature of the dataset means early errors propagate through later answers.
 
-**Placeholder answers**: On highly complex multi-document conversations (`Double_*` entries), some models return `"placeholder"` strings rather than attempting an answer. This is explicitly penalised as incorrect by the judge. The system prompt explicitly forbids placeholder answers, but some models (notably claude-sonnet-4.6) ignored this instruction consistently.
-
 **Unit and scale errors**: Models occasionally return values in different units (e.g. returning millions when the answer expects thousands), or include currency symbols when the ground truth does not.
 
 ---
