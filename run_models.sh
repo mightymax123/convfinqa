@@ -1,17 +1,35 @@
 #!/bin/bash
+# Run the full evaluation matrix across all supported models and prompting strategies.
+# Each model is evaluated on all three strategies with a fixed seed for reproducibility.
 
-docker compose exec app uv run python src/main.py --model-name gpt-4.1 --prompting-strategy basic --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o --prompting-strategy basic --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o-mini --prompting-strategy basic --sample-size 50 --use-seed False
+set -e
 
-docker compose exec app uv run python src/main.py --model-name gpt-4.1 --prompting-strategy few_shot --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o --prompting-strategy few_shot --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o-mini --prompting-strategy few_shot --sample-size 50 --use-seed False
+SAMPLE_SIZE=25
+SEED=42
 
-docker compose exec app uv run python src/main.py --model-name gpt-4.1 --prompting-strategy chain_of_thought --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o --prompting-strategy chain_of_thought --sample-size 50 --use-seed False
-docker compose exec app uv run python src/main.py --model-name gpt-4o-mini --prompting-strategy chain_of_thought --sample-size 50 --use-seed False
+MODELS=(
+    "openai/gpt-5.4-mini"
+    "openai/gpt-5.5"
+    "anthropic/claude-haiku-4.5"
+    "anthropic/claude-sonnet-4.5"
+    "anthropic/claude-sonnet-4.6"
+    "google/gemini-3.1-pro-preview"
+    "google/gemini-3.1-flash-lite-preview"
+)
 
-docker compose exec app uv run python src/main.py --model-name o4-mini --prompting-strategy chain_of_thought --sample-size 20 --use-seed False
-docker compose exec app uv run python src/main.py --model-name o4-mini --prompting-strategy chain_of_thought --sample-size 20 --use-seed False
-docker compose exec app uv run python src/main.py --model-name o4-mini --prompting-strategy chain_of_thought --sample-size 20 --use-seed False
+STRATEGIES=(
+    "basic"
+    "chain_of_thought"
+    "few_shot"
+)
+
+for model in "${MODELS[@]}"; do
+    for strategy in "${STRATEGIES[@]}"; do
+        echo "Running: model=$model strategy=$strategy"
+        docker compose exec app convfinqa \
+            --model-name "$model" \
+            --prompting-strategy "$strategy" \
+            --sample-size "$SAMPLE_SIZE" \
+            --seed "$SEED"
+    done
+done

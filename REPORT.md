@@ -2,105 +2,98 @@
 
 ## Overview
 
-I investigate a range of prompting stratergies applied to several of OpenAI's proprietary LLMs on the ConvFinQA dataset. This is a conversational dataset with each entry containing a document featuring a table alongside some additional information. Each conversation contains a series of questions, often the answer to one question can inform the answer to a subsequent question, thus requiring complesophisticated reasoning from an LLM agent to generate correct responses.
+This report evaluates a range of frontier LLMs on the **ConvFinQA** dataset — a conversational financial question-answering benchmark introduced in [Chen et al. (2022)](https://arxiv.org/abs/2210.03849). Each dataset entry contains a financial document (a table with surrounding prose) and a series of related questions, where answers to earlier questions often inform later ones. This requires an LLM agent to perform multi-step numerical reasoning grounded in tabular data.
 
-## Method and architecture
+Six models from three providers (OpenAI, Anthropic, Google) were evaluated across three prompting strategies, with all inference routed through **OpenRouter** using a single API key. All results use `--sample-size 25` and `--seed 42` on the dev set.
 
-### Parsing the dataset
+---
 
-A `ConvFinQaDataParser` class is used to iterate through each conversetion in the ConvFinQa dataset. For each conversation, a dataclass instance is created containing key information about the conversation, such as its id, the document, the questions, and the answers. The final output is a list of these `ConvQA` dataclasses representing the train or test dataset.
+## Method and Architecture
 
-### prompt engineering
+### Dataset Parsing
 
-The prompting is generated using an abstract base class classed `PromptStrategy` as a blueprint. There are then a set of 3 concrete implementations, with each representing a different prompting stratergy. The `BasicPromptStrategy` subclass used a basic prompt to be used as a baseline, telling the LLM its role and instructing it on its relevant input and output formats, then leaving the agent to figure out the details on its own. The `ChainOfThoughtPromptStrategy` utilised a chain-of-thought (COT) prompt pattern, requiring the LLM to clearly layout its reasoning step by step before generating an answers in a single clear list of python strings. The `FewShotPromptStrategy` approach utilised examples to help the agent correctly answer. During my initial experimentation, I noticed often a major limitation of the LLM was not its ability to generate correct answers, but rather its ability to format them in a way that preciseley matches the target answer. As such my fewshot learning examples didnt focous on the document and reasoning, instead they focoused on the mapping of inputs to outputs in the correct form.
+A `ConvFinQaDataParser` class loads the ConvFinQA JSON dataset and parses each conversation into a typed `ConvQA` Pydantic model containing the conversation id, the financial document (`FinancialDoc`), and paired lists of questions and ground-truth answers. The parser supports both the train and dev splits, with optional random sampling and seeding for reproducibility.
 
-### Generating LLM responses
+### Prompt Engineering
 
-The `GetLlmResponse` class is an Abstract base class, providing an interface for any concrete implementations which take in specific model names as inputs and utilise http requests to an API to generate LLM responses. The `OpenAiLlmResponse` is one such implementation, it is initialised with the name of an LLM model, checks if it matches one of the values in the `ModelName` enums, if not raising a value error. Provided the class is correctly initialised, it's `get_response` method can take in a prompt which has some prompt stratergy, alongside a document and some questions, and use these to generate a response.
+Prompts are generated using a Strategy pattern. An abstract base class `PromptStrategy` defines the interface, with three concrete implementations:
 
-The `OpenAiLlmResponse` class is currently configured to support the following LLMs.
+- **`BasicPromptStrategy`**: A minimal prompt providing the document and questions with no additional guidance. Used as a performance baseline.
+- **`ChainOfThoughtPromptStrategy`**: Instructs the model to reason step-by-step before producing final answers, encouraging explicit intermediate reasoning.
+- **`FewShotPromptStrategy`**: Provides three worked examples before the actual question. Crucially, the examples focus on **output format and answer style** rather than document reasoning — this was motivated by early experiments showing that formatting errors were a more common failure mode than reasoning errors.
 
-- `gpt-4.1` 
-- `gpt-4o`
-- `gpt-4o-mini` 
-- `o4-mini`
+### LLM Agent
 
-The `GetAllLlmResponses` class takes in a model type from the list above, alongside a prompting stratergy. It is also able to specify if the training or evaluation dataset should be used, the dataset is then parsed using the `ConvFinQaDataParser` to get a list of `ConvQA` dataclass instances. Each of these `ConvQA` instances is iterated through, and the document and questions are jointly used alongside the prompting stratergy to generate an LLM response. The class also contains an argument to do sampling of the entire dataset, this is done to reduce compute time and token useage, a random seet can also be set as an argument for reproducability. The `GetAllLlmResponses` class contains a `extract_list_from_llm_response` method, this takes the entire string output from a prompt response, and extracts just the final list of strings. 
+Each model is wrapped in a `pydantic-ai` `Agent` configured with:
 
-E.g. given a response of: `the correct answers are ['12', '-8', '£16']`
+- **Structured output**: The agent returns a validated `LlmAnswers(answers: list[str])` Pydantic model, ensuring well-formed responses.
+- **7 arithmetic tools**: `add`, `subtract`, `multiply`, `divide`, `percentage_change`, `greater`, `exp`. The system prompt mandates that all numerical computation must go through these tools rather than being computed inline — this forces a controlled, logged computation path and reduces hallucinated arithmetic.
+- **Rate-limit resilience**: Two retry layers — SDK-level HTTP retries (429/5xx) and an outer exponential backoff loop (1s → 2s → 4s → 8s…) up to `MAX_RETRIES` attempts.
+- **Usage cap**: `request_limit=25` per conversation to prevent runaway tool-call loops.
+- **Amazon Bedrock excluded**: via `OpenRouterProviderConfig(ignore=["amazon-bedrock"])` due to a known bug where Bedrock omits the `arguments` field in tool call responses.
 
-The method will return a list of `['12', '-8', '£16']`
+Generation is **sequential** — one conversation at a time. This is deliberate: each conversation can make up to 25 API requests through the tool-call loop, so concurrent processing would quickly saturate rate limits and trigger thundering-herd backoff cycles.
 
-For each set of questions evaluated in a conversation, the extracted list from the LLM response is appended to the corresponding ConvQA dataclass instance.
+### Evaluation — LLM-as-Judge
 
-### Evaluating responses
+Rather than exact string matching, responses are evaluated by a second **LLM-as-judge** agent hardcoded to `google/gemini-3.1-flash-lite-preview` (the cheapest available model). For each conversation, the judge receives the ground-truth answers and predicted answers as paired lists, and returns a boolean verdict per pair based on **semantic equivalence** — meaning `"3200"` == `"3200.0"`, `"-9.71%"` == `"-9.708%"`, and so on.
 
-Each dataclass instance of `ConvQA` represents a single conversation, these are all processed by the `GetAllLlmResponses` class. The LLM outputs for each conversation are appended to the corresponding dataclass instance of `ConvQA`. The `ConvQA` class now contains correct answers and formatted answers both as lists, iterating through both pairs of lists, the answers can be compared elementwise. If the strings match exactly, the prediction is marked as correct, if not, the prediction is marked as false. In practice this evaluation mechanism can lead to responses which are incredibly similar being marked as different, as discussed in the Error Analysis section. Each set of correct and predicted elements are compared for each conversation, and these are used to compute accuracy.
+This addresses a major limitation of exact-match evaluation, where a model that is conceptually correct but uses different precision or formatting is incorrectly penalised. Judge calls are run concurrently (capped at 5 via `asyncio.Semaphore`) since each is a single, cheap request with no tool calls.
 
-### Results
+Accuracy is computed per conversation as `correct / total * 100`, then averaged across all conversations.
 
-In total 4 LLM agents were evaluated with 3 prompting stratergies each, the following models were all evaluated on sample sizes of 50 conversations: `gpt-4.1``gpt-4o``gpt-4o-mini`. Whilst the `o4-mini` model used a sample size of 20, due to greater latencies and token costs.
+---
 
-| Model       | Prompting Strategy | Accuracy (%) |
-| ----------- | ------------------ | ------------ |
-| gpt-4.1     | Basic              | 39.27        |
-| gpt-4.1     | Chain of Thought   | 12.53        |
-| gpt-4.1     | Few-Shot           | 49.13        |
-| gpt-4o      | Basic              | 28.29        |
-| gpt-4o      | Chain of Thought   | 31.37        |
-| gpt-4o      | Few-Shot           | 35.30        |
-| gpt-4o-mini | Basic              | 15.43        |
-| gpt-4o-mini | Chain of Thought   | 11.67        |
-| gpt-4o-mini | Few-Shot           | 22.25        |
-| o4-mini     | Basic              | 44.23        |
-| o4-mini     | Chain of Thought   | 16.50        |
-| o4-mini     | Few-Shot           | 54.15        |
+## Results
 
-
-**Visual Performance Analysis**: The chart below provides a comprehensive view of all model-strategy combinations, clearly illustrating the performance patterns across the evaluation.
+| Model                 | Basic (%) | Chain-of-Thought (%) | Few-Shot (%) | **Best (%)** |
+| --------------------- | --------- | -------------------- | ------------ | ------------ |
+| **claude-sonnet-4.5** | 74.63     | 72.63                | **78.63**    | **78.63**    |
+| gemini-3.1-pro        | **77.50** | 73.59                | 77.06        | **77.50**    |
+| gpt-5.5               | 74.16     | 74.16                | 72.83        | **74.16**    |
+| claude-haiku-4.5      | 60.86     | 56.90                | **71.59**    | **71.59**    |
+| gemini-3.1-flash-lite | 57.39     | 58.86                | **71.72**    | **71.72**    |
+| gpt-5.4-mini          | 60.26     | 65.82                | **67.26**    | **67.26**    |
 
 ![ConvFinQA Results - Accuracy by Model and Prompting Strategy](images/accuracy_by_model_strategy.png)
 
 **Key Observations**:
-- **Few-Shot learning consistently outperforms** other strategies across all models, demonstrating the importance of structured examples for financial QA tasks
-- **o4-mini emerges as the top performer**, achieving 54.15% accuracy with Few-Shot prompting - significantly higher than other models
-- **Chain-of-Thought shows mixed results**, performing well with gpt-4o (31.37%) but poorly with other models, suggesting model-specific optimization needs
-- **Performance hierarchy**: o4-mini > gpt-4.1 > gpt-4o > gpt-4o-mini, indicating that model size and architecture matter significantly for this task
 
+- **Few-shot is the dominant strategy**, winning or tying for best in 5 out of 6 models. The only exception is gemini-3.1-pro, where basic and few-shot are within 0.5% of each other.
+- **claude-sonnet-4.5 achieves the highest overall accuracy** at 78.63% with few-shot prompting.
+- **Budget models are surprisingly competitive**: both `claude-haiku-4.5` and `gemini-3.1-flash-lite` reach ~72% with few-shot — within 7 percentage points of the best model at a fraction of the cost. This makes them strong candidates when cost efficiency matters.
+- **gpt-5.5 is strategy-insensitive**: scores of 74.16%, 74.16%, and 72.83% across basic, CoT, and few-shot respectively suggest the model is robust to prompting approach but may have a ceiling on this task.
+- **Chain-of-thought underperforms** relative to few-shot for most models. Explicitly requesting step-by-step reasoning appears to introduce verbosity that can conflict with the structured output format required by the agent.
+- **gpt-5.4-mini is the weakest performer** at n=25 despite appearing strong at n=5 — an early indication that small sample sizes produce unreliable rankings.
 
-
-
-### Outputs
-
-When the `ConversationsEvaluator` is ran, a new directory will be created in the `/app/outputs `directory. If the `outputs` directory does not yet exist, it will also be created. The newly created directory, will have a dynamically created name, corresponding to the model ran and the prompting stratergy in the form:
-
-`<model_name>_<prompting_stratergy>`
-
-For example: if `gpt-4.1` was ran with a prompting stratergy of `basic`, the file name would be `gpt-4.1_basic`.
-
-Inside the newly created directory 2 files are created. The first is a `.json` file, for each conversation evaluated, it contains details such as the conversation id, document, questions, and formatted LLM response. The second document is a `.txt` file, with summary information like sample size and LLM prediction accuracy. 
-
-An example of the output structure with several dynamically created directories is shown below
-
-![alt text](images/image1.png)
+---
 
 ## Error Analysis
 
-Upon investigation, the vast majority of error cases appear to come from the LLMs responses not being an exact match to those in the correct answers lists, this will often be too trivial differences such as rounding, or inconsistent use of symbols like $ and % sometimes but not always. 
+The LLM-as-judge evaluator handles the most common failure mode — formatting mismatches — but errors still occur in several patterns:
 
-For example, here was a set of correct answers: `["3200", "3160", "40", "1.3%"]`
+**Incorrect value extraction**: The model reads the wrong row or column from the financial table. This is particularly common on documents with complex multi-level headers or where the relevant value appears in the prose rather than the table.
 
-And here were the llms predictions: `["3200.0", "3160.0", "40.0", "1.27%"]`
+**Wrong computation path**: The model calls the correct tools but in the wrong order, or uses an intermediate result incorrectly in a subsequent question. The conversational nature of the dataset means early errors propagate through later answers.
 
-here the LLm was conceptually correct for all questions, yet due to not giving the answers with the same level of precision, all 4 will be marked incorrect and the LLM has effectiveley achieved a 0% accuracy score for this question. This shows how direct string matching can lead to the performance of the LLMs being heavily understated.
+**Placeholder answers**: On highly complex multi-document conversations (`Double_*` entries), some models return `"placeholder"` strings rather than attempting an answer. This is explicitly penalised as incorrect by the judge. The system prompt explicitly forbids placeholder answers, but some models (notably claude-sonnet-4.6) ignored this instruction consistently.
 
+**Unit and scale errors**: Models occasionally return values in different units (e.g. returning millions when the answer expects thousands), or include currency symbols when the ground truth does not.
 
-## Future Work 
+---
 
-- Evaluation of models from other cloud providers such as Gemini and Claude
-- Evaluation of opensource models, such as Llama and Mistral, can be done through Ollama or huggingface (highly dependent on compute resources)
-- Expansion of evaluation framework, other methods are more comprehensive than direct string matching, such as:
-  - setting a tolorance (if off by less than some small amount treat the answer as correct)
-  - Make the responses insensitive to units, remove % and £ symbols ect.
-  - get embeddings and take cosine similarity
-- Additional prompt engineering, seeing how different templates can impact performanc
+## Outputs
+
+Each pipeline run writes results to `outputs/<model-slug>_<strategy>/`, containing:
+
+- **`convfinqa_responses.json`**: Full per-conversation output including the document, questions, ground-truth answers, LLM answers, and per-answer judge verdicts.
+- **`eval.txt`**: Summary with model name, prompting strategy, sample size, and average accuracy.
+
+---
+
+## Future Work
+
+- **Larger sample sizes**: n=25 provides reasonable signal but n=50+ would give more stable rankings, particularly for distinguishing closely-performing models.
+- **Open-source models**: Evaluation of Llama and Mistral variants via Ollama or HuggingFace, contingent on available compute.
+- **Advanced prompting**: Self-consistency (majority voting across multiple runs), and retrieval-augmented prompts that highlight the most relevant table rows.
+- **Concurrent generation**: Explore whether a lower concurrency limit (e.g. 2–3 conversations) is viable for faster runs without triggering sustained rate limiting.
