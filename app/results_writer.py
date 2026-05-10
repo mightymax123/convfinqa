@@ -7,9 +7,7 @@ import os
 
 from loguru import logger
 
-from app.agent import ModelName
-from app.data_parser import ConvQA
-from app.prompting import PromptingStrategy
+from app.models import ConvQA, ModelName, PromptingStrategy
 
 _OUTPUT_ROOT = "/code/outputs"
 

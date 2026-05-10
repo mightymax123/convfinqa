@@ -8,10 +8,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from app.agent import ModelName
-from app.data_parser import ConvQA, FinancialDoc
+from app.agent import build_agent
 from app.generate_responses import GetAllLlmResponses
-from app.prompting import PromptingStrategy
+from app.models import ConvQA, FinancialDoc, ModelName, PromptingStrategy
 from app.settings import Settings
 
 _SAMPLE_DOC = FinancialDoc(
@@ -57,16 +56,17 @@ def dummy_convqa() -> ConvQA:
 @pytest.fixture
 def generator() -> GetAllLlmResponses:
     """
-    GIVEN a mocked data parser and agent,
+    GIVEN a mocked data parser and a pre-built test agent,
     WHEN creating a GetAllLlmResponses instance,
     THEN return an instance with a minimal in-memory conversation list.
     """
+    agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=3)
     with patch("app.generate_responses.ConvFinQaDataParser") as mock_parser_cls:
         mock_parser = MagicMock()
         mock_parser.parse_all_conversations.return_value = []
         mock_parser_cls.return_value = mock_parser
         instance = GetAllLlmResponses(
-            model_name=ModelName.GPT_4_1,
+            agent=agent,
             prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
             load_train_data=False,
             sample_size=0,

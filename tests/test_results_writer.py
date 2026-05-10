@@ -7,9 +7,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from app.agent import ModelName
-from app.data_parser import ConvQA, FinancialDoc
-from app.prompting import PromptingStrategy
+from app.models import ConvQA, FinancialDoc, ModelName, PromptingStrategy
 from app.results_writer import ResultsWriter
 
 _SAMPLE_DOC = FinancialDoc(

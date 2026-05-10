@@ -81,7 +81,7 @@ class TestBuildJudgeAgent:
         WHEN build_judge_agent is called,
         THEN the agent's model is OpenRouterModel configured with the Flash Lite model.
         """
-        from app.agent import ModelName
+        from app.models import ModelName
 
         agent = build_judge_agent()
 

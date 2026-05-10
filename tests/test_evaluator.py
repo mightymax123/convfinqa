@@ -7,9 +7,9 @@ from unittest.mock import patch
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from app.data_parser import ConvQA, FinancialDoc
 from app.evaluator import ConversationsEvaluator
 from app.judge import build_judge_agent
+from app.models import ConvQA, FinancialDoc
 from app.settings import Settings
 
 _SAMPLE_DOC = FinancialDoc(

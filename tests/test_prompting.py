@@ -1,7 +1,7 @@
 import pytest
 
-from app.data_parser import ConvQA, FinancialDoc
-from app.prompting import PromptGenerator, PromptingStrategy
+from app.models import ConvQA, FinancialDoc, PromptingStrategy
+from app.prompting import PromptGenerator
 
 _CONVERSATION = ConvQA(
     id="conv1",

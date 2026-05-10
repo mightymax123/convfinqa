@@ -1,61 +1,66 @@
+"""
+Prompt generation strategies for the ConvFinQA pipeline.
+
+Implements the Strategy pattern: each PromptingStrategy enum value maps to a
+concrete PromptStrategy subclass. Adding a new strategy requires only a new
+enum member, a new subclass, and one entry in PromptGenerator._STRATEGY_DICT.
+"""
+
 from abc import ABC, abstractmethod
-from enum import Enum
 
 from loguru import logger
 
-from app.data_parser import ConvQA
-
-
-class PromptingStrategy(str, Enum):
-    """Enum for supported prompting strategies."""
-
-    BASIC = "basic"
-    CHAIN_OF_THOUGHT = "chain_of_thought"
-    FEW_SHOT = "few_shot"
+from app.models import ConvQA, PromptingStrategy
 
 
 class PromptStrategy(ABC):
+    """Abstract base for prompt generation strategies."""
+
     @abstractmethod
     def generate_prompt(self, doc: str, questions: str) -> str:
-        """
-        Generate a prompt based on the document and questions.
+        """Generate a prompt from the formatted document and questions.
+
         Args:
-            doc (str): The document containing relevant information.
-            questions (str): The formatted questions to be answered.
+            doc: The rendered financial document string.
+            questions: The formatted questions string with {next_question} delimiters.
+
         Returns:
-            str: The generated prompt string.
+            The complete prompt string to send to the LLM.
         """
-        pass
 
 
 class BasicPromptStrategy(PromptStrategy):
+    """Minimal prompt containing only the document and questions."""
+
     def generate_prompt(self, doc: str, questions: str) -> str:
-        """
-        Construct a minimal prompt containing only the document and questions.
+        """Construct a minimal prompt containing only the document and questions.
 
         The system prompt already provides all task framing and tool-use instructions.
 
         Args:
-            doc (str): The financial document with 'pre_text', 'post_text', and 'table'.
-            questions (str): A formatted string with {next_question} as delimiters.
+            doc: The financial document with 'pre_text', 'post_text', and 'table'.
+            questions: A formatted string with {next_question} as delimiters.
 
         Returns:
-            str: The generated prompt string.
+            The generated prompt string.
         """
         return f"Document:\n{doc}\n\nQuestions:\n{questions}"
 
 
 class ChainOfThoughtPromptStrategy(PromptStrategy):
+    """Prompt that prepends a step-by-step reasoning instruction."""
+
     def generate_prompt(self, doc: str, questions: str) -> str:
-        """
-        Construct a prompt that prepends a step-by-step reasoning instruction.
+        """Construct a prompt that prepends a step-by-step reasoning instruction.
 
         The system prompt handles task framing; this adds only the CoT nudge.
+
         Args:
-            doc (str): The financial document with 'pre_text', 'post_text', and 'table'.
-            questions (str): A formatted string with {next_question} as delimiters.
+            doc: The financial document with 'pre_text', 'post_text', and 'table'.
+            questions: A formatted string with {next_question} as delimiters.
+
         Returns:
-            str: The generated prompt string.
+            The generated prompt string.
         """
         return (
             "Think through each question step-by-step before arriving at a final numeric answer.\n\n"
@@ -65,16 +70,17 @@ class ChainOfThoughtPromptStrategy(PromptStrategy):
 
 
 class FewShotPromptStrategy(PromptStrategy):
+    """Prompt with example Q&A pairs drawn from the dataset."""
+
     def generate_prompt(self, doc: str, questions: str) -> str:
-        """
-        Construct a few-shot prompt with example Q&A pairs drawn from the dataset.
+        """Construct a few-shot prompt with example Q&A pairs drawn from the dataset.
 
         Args:
-            doc (str): The financial document with 'pre_text', 'post_text', and 'table'.
-            questions (str): A formatted string with {next_question} as delimiters.
+            doc: The financial document with 'pre_text', 'post_text', and 'table'.
+            questions: A formatted string with {next_question} as delimiters.
 
         Returns:
-            str: The generated prompt string.
+            The generated prompt string.
         """
         return (
             "Here are three example Q&A pairs:\n\n"
@@ -102,6 +108,8 @@ class FewShotPromptStrategy(PromptStrategy):
 
 
 class PromptGenerator:
+    """Selects a prompting strategy and generates prompts from ConvQA objects."""
+
     _STRATEGY_DICT: dict[PromptingStrategy, type[PromptStrategy]] = {
         PromptingStrategy.BASIC: BasicPromptStrategy,
         PromptingStrategy.CHAIN_OF_THOUGHT: ChainOfThoughtPromptStrategy,
@@ -109,8 +117,7 @@ class PromptGenerator:
     }
 
     def __init__(self, strategy: PromptingStrategy) -> None:
-        """
-        Initialise the PromptGenerator with a specific strategy.
+        """Initialise the PromptGenerator with a specific strategy.
 
         Args:
             strategy: The prompting strategy to use.
@@ -119,16 +126,14 @@ class PromptGenerator:
         logger.info(f"Using prompt strategy: {strategy.value}")
 
     def generate_prompt(self, conversation: ConvQA) -> str:
-        """
-        Generate a prompt using the specified strategy, given a document and questions.
+        """Generate a prompt from a conversation using the configured strategy.
 
         Args:
-            conversation (ConvQA): The conversation object containing document and questions.
+            conversation: The conversation object containing document and questions.
 
         Returns:
-            str: The generated prompt string.
+            The generated prompt string.
         """
         doc = conversation.doc.formatted_doc
         questions = conversation.formatted_questions
-
         return self._strategy.generate_prompt(doc, questions)
