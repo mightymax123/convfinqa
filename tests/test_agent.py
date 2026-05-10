@@ -102,7 +102,7 @@ class TestGetResponse:
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
         with agent.override(model=test_model, tools=[]):
-            result = await get_response(agent, "What is revenue? {next_question} What is profit?")
+            result = await get_response(agent, "What is revenue? {next_question} What is profit?", max_retries=1)
 
         assert isinstance(result, LlmAnswers)
         assert result.answers == ["42", "84"]
@@ -117,7 +117,7 @@ class TestGetResponse:
         test_model = TestModel(custom_output_args={"answers": ["100"]})
 
         with agent.override(model=test_model, tools=[]):
-            result = await get_response(agent, "What is the total revenue?")
+            result = await get_response(agent, "What is the total revenue?", max_retries=1)
 
         assert result is not None
         assert result.answers == ["100"]
@@ -137,7 +137,7 @@ class TestGetResponse:
 
         with agent.override(model=test_model, tools=[]):
             with patch("app.agent.UsageLimits", return_value=UsageLimits(request_limit=0)):
-                result = await get_response(agent, "What is revenue?")
+                result = await get_response(agent, "What is revenue?", max_retries=1)
 
         assert result is None
 

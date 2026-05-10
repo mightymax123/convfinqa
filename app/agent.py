@@ -17,6 +17,8 @@ from pydantic_ai.usage import UsageLimits
 from app.settings import get_settings
 from app.tools import add, divide, exp, greater, multiply, percentage_change, subtract
 
+_INITIAL_RETRY_DELAY_SECONDS = 1.0
+
 
 class ModelName(str, Enum):
     """Enum for supported model names, using OpenRouter provider-prefixed identifiers."""
@@ -131,7 +133,7 @@ async def _run_agent(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers 
 async def get_response(
     agent: Agent[None, LlmAnswers],
     prompt: str,
-    max_retries: int = 10,
+    max_retries: int,
 ) -> LlmAnswers | None:
     """Run the agent with a prompt and return structured answers.
 

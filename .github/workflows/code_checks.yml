@@ -19,7 +19,7 @@ jobs:
       - name: Create environment file
         run: |
           cp sample.env .env
-          echo "OPENAI_API_KEY=dummy_key_for_testing" >> .env
+          echo "OPENROUTER_API_KEY=dummy_key_for_testing" >> .env
 
       - name: Build containers
         run: docker compose build

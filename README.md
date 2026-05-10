@@ -152,12 +152,12 @@ flowchart TD
     C -->|Basic| D1[Basic Prompt Builder]
     C -->|Chain-of-Thought| D2[CoT Prompt Builder] 
     C -->|Few-Shot| D3[Few-Shot Prompt Builder]
-    D1 -->     E[OpenRouter API Client]
+    D1 --> E[OpenRouter API Client]
     D2 --> E
     D3 --> E
     E -->|Retry Logic| F[LLM Response]
     F --> G[Response Parser]
-    G --> H[Accuracy Evaluator]
+    G --> H[LLM Judge - Gemini Flash Lite]
     H --> I[Structured Outputs]
     I --> J[JSON Results]
     I --> K[Summary Reports]
@@ -186,11 +186,11 @@ Basic   CoT   Few-Shot
     (with retry logic)
         ↓
    LLM Response
-        ↓
+         ↓
   Response Parser
-        ↓
- Accuracy Evaluator
-        ↓
+         ↓
+ LLM Judge (Gemini Flash Lite)
+     ↓ concurrent, max 5 at once
  Structured Outputs
     ↙        ↘
 JSON Results  Summary Reports
@@ -206,20 +206,21 @@ JSON Results  Summary Reports
 
 ### Evaluation Methodology
 
-- **Accuracy Metric**: Exact string matching after whitespace trimming
+- **Accuracy Metric**: LLM-as-judge (Gemini Flash Lite) evaluates semantic equivalence per answer pair, handling numeric formatting differences and rounding variations
 - **Reproducible Sampling**: Configurable sample sizes with optional seeding
 - **Structured Outputs**: JSON format with conversation metadata and evaluation results
 
 ### Sequential Processing
 
-Conversations are processed one at a time despite the pipeline being `async`. Each conversation is inherently sequential — the model must wait for each tool call result before deciding the next step, so there is no parallelism to exploit within a conversation. Across conversations, `asyncio.gather` with a semaphore could run multiple concurrently, but this is not implemented because OpenRouter's rate limits are saturated even with a single conversation in-flight. Adding concurrency would increase 429 errors without improving throughput. This should be revisited if the rate limit ceiling is raised.
+Conversations are processed one at a time during the generation phase. Each conversation is inherently sequential — the model must wait for each tool call result before deciding the next step. Adding concurrency here would increase rate-limit errors without improving throughput.
+
+The evaluation (judge) phase runs concurrently, capped at 5 simultaneous calls via `asyncio.Semaphore`. This keeps evaluation fast while preventing thundering-herd rate-limit collisions at large scale.
 
 ## Future Work
 
 The following enhancements would further improve the codebase:
 
 - **Open Source Models**: Integration with Llama and Mistral via Ollama or HuggingFace
-- **Performance Optimisation**: Concurrent conversation processing via `asyncio.gather` with a semaphore — currently blocked by OpenRouter rate limits, which are saturated even with sequential processing. Concurrency would only help once throughput limits are no longer the bottleneck.
 - **Advanced Prompting**: Template experimentation and prompt optimisation
 
 ## Contributing
