@@ -83,13 +83,9 @@ docker compose exec app convfinqa --model-name google/gemini-3.1-flash-lite-prev
 
 | Model                                  | Provider  |
 | -------------------------------------- | --------- |
-| `openai/gpt-4.1`                       | OpenAI    |
-| `openai/gpt-4o`                        | OpenAI    |
-| `openai/gpt-4o-mini`                   | OpenAI    |
-| `openai/o4-mini`                       | OpenAI    |
-| `openai/gpt-5.4`                       | OpenAI    |
 | `openai/gpt-5.4-mini`                  | OpenAI    |
 | `openai/gpt-5.5`                       | OpenAI    |
+| `anthropic/claude-haiku-4.5`           | Anthropic |
 | `anthropic/claude-sonnet-4.5`          | Anthropic |
 | `anthropic/claude-sonnet-4.6`          | Anthropic |
 | `google/gemini-3.1-pro-preview`        | Google    |
@@ -110,20 +106,28 @@ Results are written to `outputs/<model>_<strategy>/`:
 
 ## Results
 
+All results below use a fixed random seed (`--seed 42`) and `--sample-size 25` on the dev set.
+
 <div align="center">
 
-| Model       | Best Strategy | Accuracy (%) | Sample Size |
-| ----------- | ------------- | ------------ | ----------- |
-| **o4-mini** | Few-Shot      | **54.15**    | 20          |
-| gpt-4.1     | Few-Shot      | 49.13        | 50          |
-| gpt-4o      | Few-Shot      | 35.30        | 50          |
-| gpt-4o-mini | Few-Shot      | 22.25        | 50          |
+| Model                 | Basic (%) | Chain-of-Thought (%) | Few-Shot (%) | **Best (%)** |
+| --------------------- | --------- | -------------------- | ------------ | ------------ |
+| **claude-sonnet-4.5** | 74.63     | 72.63                | **78.63**    | **78.63**    |
+| gemini-3.1-pro        | **77.50** | 73.59                | 77.06        | **77.50**    |
+| gpt-5.5               | 74.16     | 74.16                | 72.83        | **74.16**    |
+| claude-haiku-4.5      | 60.86     | 56.90                | **71.59**    | **71.59**    |
+| gemini-3.1-flash-lite | 57.39     | 58.86                | **71.72**    | **71.72**    |
+| gpt-5.4-mini          | 60.26     | 65.82                | **67.26**    | **67.26**    |
 
 </div>
 
-> **Key Insight**: o4-mini significantly outperforms all other models, achieving 54.15% accuracy - over 2x better than gpt-4o-mini and 5% higher than gpt-4.1.
+> **Key Insights**:
+> - **Few-shot is the dominant strategy** — it wins or ties for best in 5 out of 6 models.
+> - **claude-sonnet-4.5** achieves the highest overall accuracy at **78.63%** with few-shot prompting.
+> - **Budget models punch above their weight** — both `claude-haiku-4.5` and `gemini-3.1-flash-lite` reach ~72% with few-shot, closely matching the flagship models at a fraction of the cost.
+> - **gpt-5.5 is strategy-insensitive** — nearly identical scores across all three prompting approaches.
 
-**Performance Comparison**: The chart below shows accuracy across all model-strategy combinations, highlighting Few-Shot learning's consistent superiority and o4-mini's unexpected strong performance.
+**Performance Comparison**: The chart below shows accuracy across all model-strategy combinations.
 
 ![ConvFinQA Results - Accuracy by Model and Prompting Strategy](images/accuracy_by_model_strategy.png)
 

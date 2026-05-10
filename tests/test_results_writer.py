@@ -53,7 +53,7 @@ def writer() -> ResultsWriter:
     """
     with patch("app.results_writer.os.makedirs"):
         return ResultsWriter(
-            model_name=ModelName.GPT_4_1,
+            model_name=ModelName.GPT_5_4_MINI,
             prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
             sample_size=5,
         )
@@ -62,19 +62,19 @@ def writer() -> ResultsWriter:
 class TestResultsWriterInit:
     def test_constructs_correct_responses_path(self, writer: ResultsWriter) -> None:
         """
-        GIVEN a writer built with GPT_4_1 and chain_of_thought strategy,
+        GIVEN a writer built with GPT_5_4_MINI and chain_of_thought strategy,
         WHEN checking the _responses_path attribute,
         THEN it should point to the expected subfolder and filename.
         """
-        assert writer._responses_path == "/code/outputs/gpt-4.1_chain_of_thought/convfinqa_responses.json"
+        assert writer._responses_path == "/code/outputs/gpt-5.4-mini_chain_of_thought/convfinqa_responses.json"
 
     def test_constructs_correct_eval_path(self, writer: ResultsWriter) -> None:
         """
-        GIVEN a writer built with GPT_4_1 and chain_of_thought strategy,
+        GIVEN a writer built with GPT_5_4_MINI and chain_of_thought strategy,
         WHEN checking the _eval_path attribute,
         THEN it should point to the expected subfolder and filename.
         """
-        assert writer._eval_path == "/code/outputs/gpt-4.1_chain_of_thought/eval.txt"
+        assert writer._eval_path == "/code/outputs/gpt-5.4-mini_chain_of_thought/eval.txt"
 
     def test_calls_makedirs_on_output_dir(self) -> None:
         """
@@ -84,13 +84,13 @@ class TestResultsWriterInit:
         """
         with patch("app.results_writer.os.makedirs") as mock_makedirs:
             ResultsWriter(
-                model_name=ModelName.GPT_4_1,
+                model_name=ModelName.GPT_5_4_MINI,
                 prompting_strategy=PromptingStrategy.BASIC,
                 sample_size=10,
             )
 
         mock_makedirs.assert_called_once_with(
-            "/code/outputs/gpt-4.1_basic",
+            "/code/outputs/gpt-5.4-mini_basic",
             exist_ok=True,
         )
 
@@ -128,7 +128,7 @@ class TestSaveOutputs:
             writer.save_outputs([_SAMPLE_CONV], accuracy=75.5)
 
         eval_content = written[writer._eval_path]
-        assert "Model: openai/gpt-4.1" in eval_content
+        assert "Model: openai/gpt-5.4-mini" in eval_content
         assert "Prompting Strategy: chain_of_thought" in eval_content
         assert "Average Accuracy: 75.50%" in eval_content
         assert "sample_size: 5" in eval_content

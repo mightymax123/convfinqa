@@ -60,7 +60,7 @@ def generator() -> GetAllLlmResponses:
     WHEN creating a GetAllLlmResponses instance,
     THEN return an instance with a minimal in-memory conversation list.
     """
-    agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=3)
+    agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=3)
     with patch("app.generate_responses.ConvFinQaDataParser") as mock_parser_cls:
         mock_parser = MagicMock()
         mock_parser.parse_all_conversations.return_value = []

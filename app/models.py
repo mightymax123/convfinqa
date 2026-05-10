@@ -14,13 +14,9 @@ from pydantic import BaseModel, Field, model_validator
 class ModelName(str, Enum):
     """Supported model names using OpenRouter provider-prefixed identifiers."""
 
-    GPT_4_1 = "openai/gpt-4.1"
-    GPT_4O = "openai/gpt-4o"
-    GPT_4O_MINI = "openai/gpt-4o-mini"
-    O4_MINI = "openai/o4-mini"
-    GPT_5_4 = "openai/gpt-5.4"
     GPT_5_4_MINI = "openai/gpt-5.4-mini"
     GPT_5_5 = "openai/gpt-5.5"
+    CLAUDE_HAIKU_4_5 = "anthropic/claude-haiku-4.5"
     CLAUDE_SONNET_4_5 = "anthropic/claude-sonnet-4.5"
     CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
     GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"
