@@ -11,7 +11,8 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.models.test import TestModel
 
-from app.agent import LlmAnswers, ModelName, build_agent, get_response
+from app.agent import LlmAnswers, build_agent, get_response
+from app.models import ModelName
 from app.settings import Settings
 
 _EXPECTED_TOOLS = {"add", "subtract", "multiply", "divide", "percentage_change", "greater", "exp"}

@@ -3,7 +3,6 @@ Pydantic AI agent setup for the ConvFinQA financial question-answering pipeline.
 """
 
 import asyncio
-from enum import Enum
 
 import openai
 from loguru import logger
@@ -14,27 +13,11 @@ from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettin
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.usage import UsageLimits
 
+from app.models import ModelName
 from app.settings import get_settings
 from app.tools import add, divide, exp, greater, multiply, percentage_change, subtract
 
 _INITIAL_RETRY_DELAY_SECONDS = 1.0
-
-
-class ModelName(str, Enum):
-    """Enum for supported model names, using OpenRouter provider-prefixed identifiers."""
-
-    GPT_4_1 = "openai/gpt-4.1"
-    GPT_4O = "openai/gpt-4o"
-    GPT_4O_MINI = "openai/gpt-4o-mini"
-    O4_MINI = "openai/o4-mini"
-    GPT_5_4 = "openai/gpt-5.4"
-    GPT_5_4_MINI = "openai/gpt-5.4-mini"
-    GPT_5_5 = "openai/gpt-5.5"
-    CLAUDE_SONNET_4_5 = "anthropic/claude-sonnet-4.5"
-    CLAUDE_SONNET_4_6 = "anthropic/claude-sonnet-4.6"
-    GEMINI_3_1_PRO = "google/gemini-3.1-pro-preview"
-    GEMINI_3_1_FLASH_LITE = "google/gemini-3.1-flash-lite-preview"
-
 
 _SYSTEM_PROMPT = (
     "You are a financial question-answering assistant.\n"
@@ -86,8 +69,8 @@ def build_agent(
     where tool call responses omit the arguments field, causing placeholder answers.
 
     max_retries is applied at two levels:
-    - HTTP level: passed to the underlying AsyncOpenAI client for 429/5xx retries
-    - Agent level: passed to pydantic-ai for tool-call and output-validation retries
+    - HTTP level: passed to the underlying AsyncOpenAI client for 429/5xx retries.
+    - Agent level: passed to pydantic-ai for tool-call and output-validation retries.
 
     Args:
         model_name: The model to use, identified by its OpenRouter provider-prefixed string.
@@ -119,10 +102,16 @@ def build_agent(
     )
 
 
-_INITIAL_RETRY_DELAY_SECONDS = 1.0
-
-
 async def _run_agent(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers | None:
+    """Run the agent once and return output, or None if the request limit is exceeded.
+
+    Args:
+        agent: The configured pydantic-ai Agent.
+        prompt: The user prompt containing the financial document and questions.
+
+    Returns:
+        Validated LlmAnswers, or None if UsageLimitExceeded.
+    """
     try:
         result = await agent.run(prompt, usage_limits=UsageLimits(request_limit=25))
     except UsageLimitExceeded:

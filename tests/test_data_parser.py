@@ -4,7 +4,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from app.data_parser import ConvFinQaDataParser, ConvQA, FinancialDoc
+from app.data_parser import ConvFinQaDataParser
+from app.models import ConvQA, FinancialDoc
 
 
 @pytest.fixture

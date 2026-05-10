@@ -7,8 +7,8 @@ import asyncio
 from loguru import logger
 from pydantic_ai import Agent
 
-from app.data_parser import ConvQA
 from app.judge import JudgeResult, get_judge_response
+from app.models import ConvQA
 from app.settings import get_settings
 
 _MAX_CONCURRENT_JUDGE_CALLS = 5

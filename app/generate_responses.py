@@ -7,9 +7,10 @@ import random
 from loguru import logger
 from tqdm import tqdm
 
-from app.agent import LlmAnswers, ModelName, build_agent, get_response
-from app.data_parser import ConvFinQaDataParser, ConvQA
-from app.prompting import PromptGenerator, PromptingStrategy
+from app.agent import LlmAnswers, build_agent, get_response
+from app.data_parser import ConvFinQaDataParser
+from app.models import ConvQA, ModelName, PromptingStrategy
+from app.prompting import PromptGenerator
 from app.settings import get_settings
 
 DATA_PATH = "/data/convfinqa_dataset.json"

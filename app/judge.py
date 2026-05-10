@@ -14,7 +14,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettings, OpenRouterProviderConfig
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-from app.agent import ModelName
+from app.models import ModelName
 from app.settings import get_settings
 
 _JUDGE_MODEL = ModelName.GEMINI_3_1_FLASH_LITE

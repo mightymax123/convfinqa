@@ -1,25 +1,21 @@
 """
-Main typer app for ConvFinQA
+CLI entry point for the ConvFinQA evaluation pipeline.
 """
 
 import asyncio
-from datetime import UTC, datetime
 from typing import Optional
 
 import typer
-from loguru import logger
 from pydantic import BaseModel
 from rich import print as rich_print
 from rich.pretty import Pretty
 
-from app.agent import ModelName
 from app.evaluator import ConversationsEvaluator
 from app.generate_responses import GetAllLlmResponses
 from app.judge import build_judge_agent
-from app.prompting import PromptingStrategy
+from app.log import configure_logging
+from app.models import ModelName, PromptingStrategy
 from app.results_writer import ResultsWriter
-
-LOG_FILE = "/code/logs/convfinqa.log"
 
 app = typer.Typer(
     name="convfinqa",
@@ -27,29 +23,6 @@ app = typer.Typer(
     add_completion=True,
     no_args_is_help=True,
 )
-
-
-def _configure_logging() -> None:
-    """Add a file sink to loguru using the default log path from settings.
-
-    The default stderr sink is kept. The file sink rotates at 50 MB and
-    retains the last 5 files so logs do not grow without bound. A separator
-    line is written to the file at the start of each run so individual runs
-    are clearly partitioned when reviewing the log.
-    """
-    log_file = LOG_FILE
-    logger.add(
-        log_file,
-        level="DEBUG",
-        rotation="50 MB",
-        retention=5,
-        encoding="utf-8",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level:<8} | {name}:{line} - {message}",
-    )
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(f"\n{'=' * 60}\n  NEW RUN — {timestamp}\n{'=' * 60}\n\n")
-    logger.info(f"Logging to file: {log_file}")
 
 
 class MainArgs(BaseModel):
@@ -63,8 +36,10 @@ class MainArgs(BaseModel):
 
 
 def main(args: MainArgs) -> None:
-    """
-    Main function to run the ConvFinQA pipeline.
+    """Run the ConvFinQA pipeline end-to-end.
+
+    Orchestrates data ingestion, LLM response generation, LLM-judge evaluation,
+    and output persistence in sequence.
 
     Args:
         args: Validated pipeline arguments.
@@ -109,8 +84,7 @@ def evaluate(
         None, help="Random seed for reproducible sampling. Omit for non-deterministic sampling."
     ),
 ) -> None:
-    """
-    Run the ConvFinQA pipeline with specified parameters.
+    """Run the ConvFinQA pipeline with specified parameters.
 
     Args:
         model_name: The LLM model to use.
@@ -127,7 +101,7 @@ def evaluate(
         seed=seed,
     )
 
-    _configure_logging()
+    configure_logging()
     rich_print("[green]Running ConvFinQA with the following parameters:[/green]")
     rich_print(Pretty(args, expand_all=True))
 

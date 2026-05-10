@@ -8,10 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from app.agent import ModelName
-from app.data_parser import ConvQA, FinancialDoc
 from app.generate_responses import GetAllLlmResponses
-from app.prompting import PromptingStrategy
+from app.models import ConvQA, FinancialDoc, ModelName, PromptingStrategy
 from app.settings import Settings
 
 _SAMPLE_DOC = FinancialDoc(
