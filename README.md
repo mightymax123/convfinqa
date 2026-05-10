@@ -182,9 +182,9 @@ Data Parser & Sampler
     ↙    ↓    ↘
 Basic   CoT   Few-Shot
    ↘     ↓     ↙
-   OpenAI API Client
-    (with retry logic)
-        ↓
+   OpenRouter API Client
+     (with retry logic)
+         ↓
    LLM Response
          ↓
   Response Parser
@@ -197,6 +197,19 @@ JSON Results  Summary Reports
 ```
 
 </details>
+
+### Module Structure
+
+The pipeline is organised as a flat package with a single privileged core module:
+
+- **`app/models.py`** — innermost dependency; defines all shared domain types (`ConvQA`, `FinancialDoc`, `ModelName`, `PromptingStrategy`). Imports only stdlib and pydantic — no other app module imports from here flow back into it.
+- **`app/log.py`** — logging setup; `configure_logging()` called once from `main.py`
+- **`app/agent.py`** / **`app/judge.py`** — LLM client wiring via pydantic-ai + OpenRouter
+- **`app/generate_responses.py`** / **`app/evaluator.py`** — pipeline orchestration; both receive pre-built agents via constructor injection
+- **`app/data_parser.py`** / **`app/prompting.py`** / **`app/results_writer.py`** — data ingestion, prompt construction, output persistence
+- **`app/tools.py`** — 7 arithmetic tools registered on the agent
+- **`app/settings.py`** — pydantic-settings config, `@lru_cache`
+- **`app/main.py`** — CLI entry point (typer); builds agents and wires all components
 
 ### Prompting Strategies
 
@@ -212,9 +225,25 @@ JSON Results  Summary Reports
 
 ### Sequential Processing
 
-Conversations are processed one at a time during the generation phase. Each conversation is inherently sequential — the model must wait for each tool call result before deciding the next step. Adding concurrency here would increase rate-limit errors without improving throughput.
+Conversations are processed one at a time during the generation phase. This is a deliberate design decision driven by how tool-equipped agents work.
 
-The evaluation (judge) phase runs concurrently, capped at 5 simultaneous calls via `asyncio.Semaphore`. This keeps evaluation fast while preventing thundering-herd rate-limit collisions at large scale.
+Unlike plain text generation (1 request per conversation), each conversation here involves a back-and-forth tool call loop:
+
+1. Prompt sent → model decides to call a tool (e.g. `subtract`)
+2. Tool result returned → model decides to call another tool (e.g. `percentage_change`)
+3. Loop continues until the model produces its final structured output
+
+A single multi-question conversation can make up to **25 requests** (`request_limit=25`). Running even 3 conversations concurrently could produce up to **75 simultaneous requests**, which would saturate most standard API rate limit quotas immediately.
+
+The problem compounds under concurrency — once the rate limiter fires, all concurrent conversations enter backoff simultaneously. When the backoff expires they all retry at once, hitting the rate limiter again. This thundering-herd cycle wastes more time in backoff than sequential processing would have taken in the first place.
+
+Two retry layers guard against rate limits during sequential processing:
+- **SDK-level** (`openai` client `max_retries`): retries 429s and 5xx errors silently with its own backoff — never visible in logs
+- **Outer loop** (`get_response`): catches `RateLimitError` after the SDK gives up, applying exponential backoff (1s → 2s → 4s → 8s…) up to `MAX_RETRIES` attempts before re-raising
+
+Both layers must be exhausted before a rate limit error actually propagates — in practice this means the pipeline is highly resilient to sustained rate limiting.
+
+The evaluation (judge) phase runs concurrently, capped at 5 simultaneous calls via `asyncio.Semaphore`. Judge calls are safe to parallelise because each is a single request with no tool calls — the request count per conversation is fixed and small.
 
 ## Future Work
 
