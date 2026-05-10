@@ -2,16 +2,14 @@
 Tests for ConversationsEvaluator in app/evaluator.py.
 """
 
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from app.agent import ModelName
 from app.data_parser import ConvQA, FinancialDoc
 from app.evaluator import ConversationsEvaluator
 from app.judge import build_judge_agent
-from app.prompting import PromptingStrategy
 from app.settings import Settings
 
 _SAMPLE_DOC = FinancialDoc(
@@ -41,8 +39,7 @@ def patch_settings(monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture
 def judge_agent():
     """Return a judge agent backed by TestModel to avoid real API calls."""
-    agent = build_judge_agent()
-    return agent
+    return build_judge_agent()
 
 
 @pytest.fixture
@@ -99,11 +96,7 @@ def no_match_conv() -> list[ConvQA]:
     ]
 
 
-@patch("app.evaluator.os.makedirs")
-@patch("builtins.open", new_callable=mock_open)
 async def test_evaluate_all_conversations_100_percent(
-    mock_file: MagicMock,
-    mock_makedirs: MagicMock,
     perfect_match_conv: list[ConvQA],
     judge_agent,
 ) -> None:
@@ -116,21 +109,15 @@ async def test_evaluate_all_conversations_100_percent(
     with judge_agent.override(model=test_model):
         evaluator = ConversationsEvaluator(
             all_convs=perfect_match_conv,
-            model_name=ModelName.GPT_4_1,
-            prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
-            sample_size=1,
             judge_agent=judge_agent,
         )
         result = await evaluator.evaluate_all_conversations()
 
     assert result == 100.0
+    assert perfect_match_conv[0].judge_verdicts == [True, True]
 
 
-@patch("app.evaluator.os.makedirs")
-@patch("builtins.open", new_callable=mock_open)
 async def test_evaluate_all_conversations_50_percent(
-    mock_file: MagicMock,
-    mock_makedirs: MagicMock,
     partial_match_conv: list[ConvQA],
     judge_agent,
 ) -> None:
@@ -143,21 +130,15 @@ async def test_evaluate_all_conversations_50_percent(
     with judge_agent.override(model=test_model):
         evaluator = ConversationsEvaluator(
             all_convs=partial_match_conv,
-            model_name=ModelName.GPT_4_1,
-            prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
-            sample_size=1,
             judge_agent=judge_agent,
         )
         result = await evaluator.evaluate_all_conversations()
 
     assert result == 50.0
+    assert partial_match_conv[0].judge_verdicts == [True, False]
 
 
-@patch("app.evaluator.os.makedirs")
-@patch("builtins.open", new_callable=mock_open)
 async def test_evaluate_all_conversations_0_percent(
-    mock_file: MagicMock,
-    mock_makedirs: MagicMock,
     no_match_conv: list[ConvQA],
     judge_agent,
 ) -> None:
@@ -170,11 +151,9 @@ async def test_evaluate_all_conversations_0_percent(
     with judge_agent.override(model=test_model):
         evaluator = ConversationsEvaluator(
             all_convs=no_match_conv,
-            model_name=ModelName.GPT_4_1,
-            prompting_strategy=PromptingStrategy.CHAIN_OF_THOUGHT,
-            sample_size=1,
             judge_agent=judge_agent,
         )
         result = await evaluator.evaluate_all_conversations()
 
     assert result == 0.0
+    assert no_match_conv[0].judge_verdicts == [False, False]
