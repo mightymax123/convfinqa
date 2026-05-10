@@ -61,6 +61,9 @@ class ConvQA(BaseModel):
     questions: list[str] = Field(min_length=1, description="List of questions in the conversation")
     answers: list[str] = Field(min_length=1, description="List of answers for the conversation")
     llm_answers: list[str] = Field(default_factory=list, description="Structured answers returned by the LLM.")
+    judge_verdicts: list[bool] = Field(
+        default_factory=list, description="Per-answer correctness verdicts from the LLM judge."
+    )
 
     @property
     def formatted_questions(self) -> str:

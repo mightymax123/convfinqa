@@ -2,8 +2,6 @@
 Generate LLM responses for conversations in the ConvFinQA dataset.
 """
 
-import json
-import os
 import random
 
 from loguru import logger
@@ -60,9 +58,6 @@ class GetAllLlmResponses:
                 random.seed(seed)
             self.all_convs = random.sample(self.all_convs, sample_size)
 
-        subfolder = f"{model_name.value.split('/')[-1]}_{prompting_strategy.value}"
-        self.save_path = os.path.join("/code/outputs", subfolder, "convfinqa_responses.json")
-
     async def _get_conv_response(self, conv: ConvQA) -> None:
         """Get the LLM response for a single conversation and store structured answers.
 
@@ -88,36 +83,6 @@ class GetAllLlmResponses:
         conv.llm_answers = llm_answers.answers
         logger.debug(f"Conversation {conv.id} complete — answers: {llm_answers.answers}")
 
-    def _save_conversations_to_json(self) -> None:
-        """Save the list of conversations with LLM answers to a JSON file.
-
-        Raises:
-            ValueError: If the list of conversations is empty.
-        """
-        if not self.all_convs:
-            raise ValueError("The list of conversations is empty.")
-
-        dir_path = os.path.dirname(self.save_path)
-        if dir_path and not os.path.exists(dir_path):
-            os.makedirs(dir_path, exist_ok=True)
-
-        data = [
-            {
-                "id": conv.id,
-                "doc": conv.doc.model_dump(),
-                "questions": conv.questions,
-                "answers": conv.answers,
-                "llm_answers": conv.llm_answers,
-            }
-            for conv in self.all_convs
-        ]
-        logger.info(f"Saving {len(data)} conversations to {self.save_path}")
-
-        with open(self.save_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-        logger.info(f"Conversations saved successfully to {self.save_path}")
-
     async def get_all_responses(self) -> list[ConvQA]:
         """Get LLM responses for all conversations in the dataset sequentially.
 
@@ -132,7 +97,5 @@ class GetAllLlmResponses:
         """
         for conv in tqdm(self.all_convs, desc="Processing conversations", unit="conv"):
             await self._get_conv_response(conv)
-
-        self._save_conversations_to_json()
 
         return self.all_convs

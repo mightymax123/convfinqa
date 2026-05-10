@@ -128,9 +128,8 @@ class TestGetAllResponses:
 
         test_model = TestModel(custom_output_args={"answers": ["answer"]})
 
-        with patch.object(generator, "_save_conversations_to_json"):
-            with generator.agent.override(model=test_model, tools=[]):
-                result = await generator.get_all_responses()
+        with generator.agent.override(model=test_model, tools=[]):
+            result = await generator.get_all_responses()
 
         assert result[0].llm_answers == ["answer"]
         assert result[1].llm_answers == ["answer"]
