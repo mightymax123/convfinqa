@@ -71,7 +71,7 @@ class ConversationsEvaluator:
         Returns:
             Average accuracy across all conversations as a percentage.
         """
-        accs = await asyncio.gather(*[self._evaluate_conversation(conv) for conv in self.all_convs])
+        accs: list[float] = await asyncio.gather(*[self._evaluate_conversation(conv) for conv in self.all_convs])
         avg_accuracy = sum(accs) / len(accs) if accs else 0.0
 
         logger.info(f"Evaluated {len(self.all_convs)} conversations. Average accuracy: {avg_accuracy:.2f}%")
