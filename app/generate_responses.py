@@ -5,11 +5,12 @@ Generate LLM responses for conversations in the ConvFinQA dataset.
 import random
 
 from loguru import logger
+from pydantic_ai import Agent
 from tqdm import tqdm
 
-from app.agent import LlmAnswers, build_agent, get_response
+from app.agent import LlmAnswers, get_response
 from app.data_parser import ConvFinQaDataParser
-from app.models import ConvQA, ModelName, PromptingStrategy
+from app.models import ConvQA, PromptingStrategy
 from app.prompting import PromptGenerator
 from app.settings import get_settings
 
@@ -19,17 +20,17 @@ DATA_PATH = "/data/convfinqa_dataset.json"
 class GetAllLlmResponses:
     def __init__(
         self,
-        model_name: ModelName,
+        agent: Agent[None, LlmAnswers],
         prompting_strategy: PromptingStrategy,
         load_train_data: bool,
         sample_size: int,
         seed: int | None,
     ):
         """
-        Initialise with model, prompting strategy, and sampling options.
+        Initialise with a pre-built agent, prompting strategy, and sampling options.
 
         Args:
-            model_name: The LLM model to use.
+            agent: Pre-built pydantic-ai Agent configured for LLM inference.
             prompting_strategy: The strategy for generating prompts.
             load_train_data: Whether to load training data instead of the dev set.
             sample_size: Number of conversations to randomly sample from the dataset.
@@ -38,19 +39,13 @@ class GetAllLlmResponses:
         settings = get_settings()
 
         self.max_retries = settings.max_retries
-        self.agent = build_agent(
-            model_name=model_name,
-            max_retries=settings.max_retries,
-        )
+        self.agent = agent
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
         conv_parser = ConvFinQaDataParser(data_path=DATA_PATH, load_train_data=load_train_data)
         self.all_convs = conv_parser.parse_all_conversations()
 
-        logger.info(
-            f"Initialising GetAllLlmResponses with model: {model_name.value}, "
-            f"and prompting strategy: {prompting_strategy.value}"
-        )
+        logger.info(f"Initialising GetAllLlmResponses with prompting strategy: {prompting_strategy.value}")
 
         if sample_size is not None:
             logger.info(f"Sampling {sample_size} conversations from the dataset")

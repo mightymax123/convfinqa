@@ -10,12 +10,14 @@ from pydantic import BaseModel
 from rich import print as rich_print
 from rich.pretty import Pretty
 
+from app.agent import build_agent
 from app.evaluator import ConversationsEvaluator
 from app.generate_responses import GetAllLlmResponses
 from app.judge import build_judge_agent
 from app.log import configure_logging
 from app.models import ModelName, PromptingStrategy
 from app.results_writer import ResultsWriter
+from app.settings import get_settings
 
 app = typer.Typer(
     name="convfinqa",
@@ -50,8 +52,10 @@ def main(args: MainArgs) -> None:
         sample_size=args.sample_size,
     )
 
+    settings = get_settings()
+    agent = build_agent(model_name=args.model_name, max_retries=settings.max_retries)
     generator = GetAllLlmResponses(
-        model_name=args.model_name,
+        agent=agent,
         prompting_strategy=args.prompting_strategy,
         sample_size=args.sample_size,
         load_train_data=args.use_train_data,
