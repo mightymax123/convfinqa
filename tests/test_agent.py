@@ -66,7 +66,7 @@ class TestBuildAgent:
         WHEN build_agent is called,
         THEN an Agent instance is returned.
         """
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=2)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=2)
 
         assert isinstance(agent, Agent)
 
@@ -76,7 +76,7 @@ class TestBuildAgent:
         WHEN build_agent is called,
         THEN all expected arithmetic tools are registered on the agent.
         """
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         registered = set(agent._function_toolset.tools.keys())
 
         assert registered == _EXPECTED_TOOLS
@@ -87,9 +87,9 @@ class TestBuildAgent:
         WHEN build_agent is called,
         THEN the agent's model is an OpenRouterModel with the correct model name.
         """
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=5)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=5)
         assert isinstance(agent.model, OpenRouterModel)
-        assert agent.model.model_name == ModelName.GPT_4_1.value
+        assert agent.model.model_name == ModelName.GPT_5_4_MINI.value
 
 
 class TestGetResponse:
@@ -99,7 +99,7 @@ class TestGetResponse:
         WHEN get_response is called with a prompt,
         THEN an LlmAnswers instance with the expected answers is returned.
         """
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         test_model = TestModel(custom_output_args={"answers": ["42", "84"]})
 
         with agent.override(model=test_model, tools=[]):
@@ -114,7 +114,7 @@ class TestGetResponse:
         WHEN get_response is called,
         THEN an LlmAnswers instance with one answer is returned.
         """
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         test_model = TestModel(custom_output_args={"answers": ["100"]})
 
         with agent.override(model=test_model, tools=[]):
@@ -133,7 +133,7 @@ class TestGetResponse:
 
         from pydantic_ai.usage import UsageLimits
 
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         test_model = TestModel(custom_output_args={"answers": ["42"]})
 
         with agent.override(model=test_model, tools=[]):
@@ -150,7 +150,7 @@ class TestGetResponse:
         """
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         success_output = MagicMock()
         success_output.output = LlmAnswers(answers=["42"])
 
@@ -185,7 +185,7 @@ class TestGetResponse:
         """
         from unittest.mock import AsyncMock, MagicMock, call, patch
 
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         success_output = MagicMock()
         success_output.output = LlmAnswers(answers=["42"])
 
@@ -220,7 +220,7 @@ class TestGetResponse:
         """
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        agent = build_agent(model_name=ModelName.GPT_4_1, max_retries=1)
+        agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=1)
         rate_limit_error = openai.RateLimitError(
             message="rate limit",
             response=MagicMock(status_code=429, headers={}),
