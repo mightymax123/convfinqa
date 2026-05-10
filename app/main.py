@@ -15,6 +15,7 @@ from rich.pretty import Pretty
 from app.agent import ModelName
 from app.evaluator import ConversationsEvaluator
 from app.generate_responses import GetAllLlmResponses
+from app.judge import build_judge_agent
 from app.prompting import PromptingStrategy
 
 LOG_FILE = "/code/logs/convfinqa.log"
@@ -76,13 +77,15 @@ def main(args: MainArgs) -> None:
     )
     all_convs = asyncio.run(generator.get_all_responses())
 
+    judge_agent = build_judge_agent()
     evaluator = ConversationsEvaluator(
         all_convs=all_convs,
         model_name=args.model_name,
         prompting_strategy=args.prompting_strategy,
         sample_size=args.sample_size,
+        judge_agent=judge_agent,
     )
-    accuracy = evaluator.evaluate_all_conversations()
+    accuracy = asyncio.run(evaluator.evaluate_all_conversations())
 
     rich_print(f"[bold green]Average accuracy: {accuracy:.2f}%[/bold green]")
 
