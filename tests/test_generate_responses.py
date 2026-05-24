@@ -23,9 +23,9 @@ _SAMPLE_DOC = FinancialDoc(
 @pytest.fixture(autouse=True)
 def patch_settings(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
     """
-    GIVEN tests that instantiate GetAllLlmResponses (which calls get_settings()),
+    GIVEN tests that instantiate GetAllLlmResponses (which calls build_agent()),
     WHEN any test in this module runs,
-    THEN get_settings() is patched in app.generate_responses and OPENROUTER_API_KEY is set
+    THEN get_settings() is patched in app.agent and OPENROUTER_API_KEY is set
          in the environment so no real environment variable or .env file is required.
     """
     from app.settings import get_settings
@@ -33,7 +33,7 @@ def patch_settings(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     get_settings.cache_clear()
     dummy = Settings(openrouter_api_key="test-key")
-    with patch("app.generate_responses.get_settings", return_value=dummy):
+    with patch("app.agent.get_settings", return_value=dummy):
         yield
     get_settings.cache_clear()
 
@@ -60,7 +60,7 @@ def generator() -> GetAllLlmResponses:
     WHEN creating a GetAllLlmResponses instance,
     THEN return an instance with a minimal in-memory conversation list.
     """
-    agent = build_agent(model_name=ModelName.GPT_5_4_MINI, max_retries=3)
+    agent = build_agent(model_name=ModelName.GPT_5_4_MINI)
     with patch("app.generate_responses.ConvFinQaDataParser") as mock_parser_cls:
         mock_parser = MagicMock()
         mock_parser.parse_all_conversations.return_value = []

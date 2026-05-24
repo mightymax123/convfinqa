@@ -12,7 +12,6 @@ from app.agent import LlmAnswers, get_response
 from app.data_parser import ConvFinQaDataParser
 from app.models import ConvQA, PromptingStrategy
 from app.prompting import PromptGenerator
-from app.settings import get_settings
 
 DATA_PATH = "/data/convfinqa_dataset.json"
 
@@ -36,9 +35,6 @@ class GetAllLlmResponses:
             sample_size: Number of conversations to randomly sample from the dataset.
             seed: Random seed for reproducible sampling. If None, sampling is non-deterministic.
         """
-        settings = get_settings()
-
-        self.max_retries = settings.max_retries
         self.agent = agent
         self.prompt_gen = PromptGenerator(strategy=prompting_strategy)
 
@@ -67,7 +63,7 @@ class GetAllLlmResponses:
         logger.debug(f"\n--- Conversation: {conv.id} ---")
 
         prompt = self.prompt_gen.generate_prompt(conv)
-        llm_answers: LlmAnswers | None = await get_response(self.agent, prompt, max_retries=self.max_retries)
+        llm_answers: LlmAnswers | None = await get_response(self.agent, prompt)
 
         if llm_answers is None:
             logger.warning(

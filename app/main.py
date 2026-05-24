@@ -17,7 +17,6 @@ from app.judge import build_judge_agent
 from app.log import configure_logging
 from app.models import ModelName, PromptingStrategy
 from app.results_writer import ResultsWriter
-from app.settings import get_settings
 
 app = typer.Typer(
     name="convfinqa",
@@ -46,14 +45,7 @@ def main(args: MainArgs) -> None:
     Args:
         args: Validated pipeline arguments.
     """
-    writer = ResultsWriter(
-        model_name=args.model_name,
-        prompting_strategy=args.prompting_strategy,
-        sample_size=args.sample_size,
-    )
-
-    settings = get_settings()
-    agent = build_agent(model_name=args.model_name, max_retries=settings.max_retries)
+    agent = build_agent(model_name=args.model_name)
     generator = GetAllLlmResponses(
         agent=agent,
         prompting_strategy=args.prompting_strategy,
@@ -70,6 +62,11 @@ def main(args: MainArgs) -> None:
     )
     accuracy = asyncio.run(evaluator.evaluate_all_conversations())
 
+    writer = ResultsWriter(
+        model_name=args.model_name,
+        prompting_strategy=args.prompting_strategy,
+        sample_size=args.sample_size,
+    )
     writer.save_outputs(all_convs, accuracy)
 
     rich_print(f"[bold green]Average accuracy: {accuracy:.2f}%[/bold green]")

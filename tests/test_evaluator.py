@@ -31,8 +31,7 @@ def patch_settings(monkeypatch: pytest.MonkeyPatch):
     get_settings.cache_clear()
     dummy = Settings(openrouter_api_key="test-key")
     with patch("app.judge.get_settings", return_value=dummy):
-        with patch("app.evaluator.get_settings", return_value=dummy):
-            yield
+        yield
     get_settings.cache_clear()
 
 

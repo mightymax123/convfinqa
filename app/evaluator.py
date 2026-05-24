@@ -9,7 +9,6 @@ from pydantic_ai import Agent
 
 from app.judge import JudgeResult, get_judge_response
 from app.models import ConvQA
-from app.settings import get_settings
 
 _MAX_CONCURRENT_JUDGE_CALLS = 5
 
@@ -31,7 +30,6 @@ class ConversationsEvaluator:
         logger.info(f"Initialising ConversationsEvaluator with {len(all_convs)} conversations")
         self.all_convs = all_convs
         self.judge_agent = judge_agent
-        self.max_retries = get_settings().max_retries
         self._semaphore = asyncio.Semaphore(_MAX_CONCURRENT_JUDGE_CALLS)
 
     async def _evaluate_conversation(self, conv: ConvQA) -> float:
@@ -54,7 +52,6 @@ class ConversationsEvaluator:
                 self.judge_agent,
                 ground_truth=conv.answers,
                 predicted=conv.llm_answers,
-                max_retries=self.max_retries,
             )
 
         correct = sum(judge_result.results)

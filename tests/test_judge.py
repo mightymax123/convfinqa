@@ -114,7 +114,6 @@ class TestGetJudgeResponse:
                 agent,
                 ground_truth=["10", "20", "30"],
                 predicted=["10", "20.0", "30"],
-                max_retries=1,
             )
 
         assert result is not None
@@ -134,7 +133,6 @@ class TestGetJudgeResponse:
                 agent,
                 ground_truth=["10", "20", "30"],
                 predicted=["WRONG", "WRONG", "WRONG"],
-                max_retries=1,
             )
 
         assert result is not None
@@ -154,7 +152,6 @@ class TestGetJudgeResponse:
                 agent,
                 ground_truth=["10", "20", "30"],
                 predicted=["10", "WRONG", "30"],
-                max_retries=1,
             )
 
         assert result is not None
@@ -163,7 +160,7 @@ class TestGetJudgeResponse:
     async def test_get_judge_response_retries_on_rate_limit_then_succeeds(self) -> None:
         """
         GIVEN an agent that raises RateLimitError on the first call then succeeds,
-        WHEN get_judge_response is called with max_retries=2,
+        WHEN get_judge_response is called with settings.max_retries=2,
         THEN the result is returned after one retry and backoff sleep is called once.
         """
         agent = build_judge_agent()
@@ -185,14 +182,15 @@ class TestGetJudgeResponse:
                 raise rate_limit_error
             return success_output
 
-        with patch.object(agent, "run", side_effect=fake_run):
-            with patch("app.judge.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-                result = await get_judge_response(
-                    agent,
-                    ground_truth=["10", "20"],
-                    predicted=["10", "WRONG"],
-                    max_retries=2,
-                )
+        dummy = Settings(openrouter_api_key="test-key", max_retries=2)
+        with patch("app.judge.get_settings", return_value=dummy):
+            with patch.object(agent, "run", side_effect=fake_run):
+                with patch("app.judge.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+                    result = await get_judge_response(
+                        agent,
+                        ground_truth=["10", "20"],
+                        predicted=["10", "WRONG"],
+                    )
 
         assert result is not None
         assert result.results == [True, False]
@@ -201,7 +199,7 @@ class TestGetJudgeResponse:
     async def test_get_judge_response_backoff_doubles_on_each_retry(self) -> None:
         """
         GIVEN an agent that raises RateLimitError on the first two calls then succeeds,
-        WHEN get_judge_response is called with max_retries=3,
+        WHEN get_judge_response is called with settings.max_retries=3,
         THEN asyncio.sleep is called with 1.0 then 2.0, confirming exponential doubling.
         """
         agent = build_judge_agent()
@@ -223,14 +221,15 @@ class TestGetJudgeResponse:
                 raise rate_limit_error
             return success_output
 
-        with patch.object(agent, "run", side_effect=fake_run):
-            with patch("app.judge.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-                result = await get_judge_response(
-                    agent,
-                    ground_truth=["10"],
-                    predicted=["10"],
-                    max_retries=3,
-                )
+        dummy = Settings(openrouter_api_key="test-key", max_retries=3)
+        with patch("app.judge.get_settings", return_value=dummy):
+            with patch.object(agent, "run", side_effect=fake_run):
+                with patch("app.judge.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+                    result = await get_judge_response(
+                        agent,
+                        ground_truth=["10"],
+                        predicted=["10"],
+                    )
 
         assert result is not None
         assert mock_sleep.await_args_list == [call(1.0), call(2.0)]
@@ -238,7 +237,7 @@ class TestGetJudgeResponse:
     async def test_get_judge_response_raises_after_all_retries_exhausted(self) -> None:
         """
         GIVEN an agent that always raises RateLimitError,
-        WHEN get_judge_response is called with max_retries=2,
+        WHEN get_judge_response is called with settings.max_retries=2,
         THEN RateLimitError is re-raised after the retry budget is exhausted.
         """
         agent = build_judge_agent()
@@ -248,12 +247,13 @@ class TestGetJudgeResponse:
             body=None,
         )
 
-        with patch.object(agent, "run", side_effect=rate_limit_error):
-            with patch("app.judge.asyncio.sleep", new_callable=AsyncMock):
-                with pytest.raises(openai.RateLimitError):
-                    await get_judge_response(
-                        agent,
-                        ground_truth=["10"],
-                        predicted=["10"],
-                        max_retries=2,
-                    )
+        dummy = Settings(openrouter_api_key="test-key", max_retries=2)
+        with patch("app.judge.get_settings", return_value=dummy):
+            with patch.object(agent, "run", side_effect=rate_limit_error):
+                with patch("app.judge.asyncio.sleep", new_callable=AsyncMock):
+                    with pytest.raises(openai.RateLimitError):
+                        await get_judge_response(
+                            agent,
+                            ground_truth=["10"],
+                            predicted=["10"],
+                        )

@@ -57,7 +57,6 @@ class LlmAnswers(BaseModel):
 
 def build_agent(
     model_name: ModelName,
-    max_retries: int,
 ) -> Agent[None, LlmAnswers]:
     """Construct a pydantic-ai Agent for the given model and retry settings.
 
@@ -74,7 +73,6 @@ def build_agent(
 
     Args:
         model_name: The model to use, identified by its OpenRouter provider-prefixed string.
-        max_retries: Number of retries for both HTTP-level and agent-level failures.
 
     Returns:
         A configured Agent that returns validated LlmAnswers output.
@@ -83,7 +81,7 @@ def build_agent(
     openai_client = openai.AsyncOpenAI(
         api_key=settings.openrouter_api_key,
         base_url="https://openrouter.ai/api/v1",
-        max_retries=max_retries,
+        max_retries=settings.max_retries,
     )
     model_settings = OpenRouterModelSettings(
         openrouter_provider=OpenRouterProviderConfig(ignore=["amazon-bedrock"]),
@@ -97,7 +95,7 @@ def build_agent(
         model,
         output_type=LlmAnswers,
         instructions=_SYSTEM_PROMPT,
-        retries=max_retries,
+        retries=settings.max_retries,
         tools=[add, subtract, multiply, divide, percentage_change, greater, exp],
     )
 
@@ -122,7 +120,6 @@ async def _run_agent(agent: Agent[None, LlmAnswers], prompt: str) -> LlmAnswers 
 async def get_response(
     agent: Agent[None, LlmAnswers],
     prompt: str,
-    max_retries: int,
 ) -> LlmAnswers | None:
     """Run the agent with a prompt and return structured answers.
 
@@ -137,7 +134,6 @@ async def get_response(
     Args:
         agent: The configured pydantic-ai Agent.
         prompt: The user prompt containing the financial document and questions.
-        max_retries: Maximum number of rate-limit retries before re-raising.
 
     Returns:
         Validated LlmAnswers containing the list of answers, or None if the
@@ -146,14 +142,15 @@ async def get_response(
     Raises:
         openai.RateLimitError: If the rate limit is still hit after all retries.
     """
+    max_retries = get_settings().max_retries
     delay = _INITIAL_RETRY_DELAY_SECONDS
-    for attempt in range(max_retries + 1):
+    for attempt in range(1, max_retries + 1):
         try:
             result = await _run_agent(agent, prompt)
         except openai.RateLimitError:
             if attempt == max_retries:
                 raise
-            logger.warning(f"Rate limit hit — retrying in {delay:.0f}s (attempt {attempt + 1}/{max_retries})")
+            logger.warning(f"Rate limit hit — retrying in {delay:.0f}s (attempt {attempt}/{max_retries})")
             await asyncio.sleep(delay)
             delay *= 2
             continue
