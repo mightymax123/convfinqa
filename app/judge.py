@@ -54,12 +54,10 @@ def build_judge_agent() -> Agent[None, JudgeResult]:
         A configured Agent that returns validated JudgeResult output.
     """
     settings = get_settings()
-    max_retries = settings.max_retries
-
     openai_client = openai.AsyncOpenAI(
         api_key=settings.openrouter_api_key,
         base_url="https://openrouter.ai/api/v1",
-        max_retries=max_retries,
+        max_retries=settings.max_retries,
     )
     model_settings = OpenRouterModelSettings(
         openrouter_provider=OpenRouterProviderConfig(ignore=["amazon-bedrock"]),
@@ -73,7 +71,7 @@ def build_judge_agent() -> Agent[None, JudgeResult]:
         model,
         output_type=JudgeResult,
         instructions=_SYSTEM_PROMPT,
-        retries=max_retries,
+        retries=settings.max_retries,
     )
 
 
@@ -111,7 +109,6 @@ async def get_judge_response(
     agent: Agent[None, JudgeResult],
     ground_truth: list[str],
     predicted: list[str],
-    max_retries: int,
 ) -> JudgeResult:  # type: ignore[return]
     """Compare ground-truth and predicted answers using the judge agent.
 
@@ -122,7 +119,6 @@ async def get_judge_response(
         agent: The configured judge Agent.
         ground_truth: The reference answers.
         predicted: The LLM-generated answers to evaluate.
-        max_retries: Maximum number of rate-limit retries before re-raising.
 
     Returns:
         JudgeResult with one boolean per answer pair.
@@ -131,15 +127,16 @@ async def get_judge_response(
         openai.RateLimitError: If the rate limit is still hit after all retries.
     """
     prompt = _format_judge_prompt(ground_truth, predicted)
+    max_retries = get_settings().max_retries
     delay = _INITIAL_RETRY_DELAY_SECONDS
 
-    for attempt in range(max_retries + 1):
+    for attempt in range(1, max_retries + 1):
         try:
             result = await _run_judge(agent, prompt)
         except openai.RateLimitError:
             if attempt == max_retries:
                 raise
-            logger.warning(f"Judge rate limit hit — retrying in {delay:.0f}s (attempt {attempt + 1}/{max_retries})")
+            logger.warning(f"Judge rate limit hit — retrying in {delay:.0f}s (attempt {attempt}/{max_retries})")
             await asyncio.sleep(delay)
             delay *= 2
             continue
