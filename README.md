@@ -34,7 +34,7 @@ This pipeline evaluates models from OpenAI, Anthropic, and Google via **OpenRout
    make init
    ```
 2. Open `.env` and set `OPENROUTER_API_KEY` to your OpenRouter API key.
-3. Place the ConvFinQA dataset at `data/convfinqa_dataset.json`.
+3. Place the ConvFinQA dataset at `data/convfinqa_dataset.json`. Download it from the [official repository](https://github.com/czyssrs/ConvFinQA) — the file you need is `data/dev.json` from that repo; rename it to `convfinqa_dataset.json` and place it in the `data/` directory.
 4. Build and start the container:
    ```bash
    docker compose up --build -d
